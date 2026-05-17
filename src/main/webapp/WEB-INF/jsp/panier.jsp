@@ -82,9 +82,24 @@
                    onclick="return confirm('<spring:message code="cart.confirm.empty" javaScriptEscape="true"/>')">
                     <spring:message code="cart.btn.empty"/>
                 </a>
-                <a href="<spring:url value='/commandes/checkout'/>" class="btn btn-success btn-lg float-end">
-                    <spring:message code="cart.btn.validate"/>
-                </a>
+
+                <%-- Bouton commander : connecté → checkout, invité → connexion --%>
+                <sec:authorize access="isAuthenticated()">
+                    <a href="<spring:url value='/commandes/checkout'/>" class="btn btn-success btn-lg float-end">
+                        <spring:message code="cart.btn.validate"/>
+                    </a>
+                </sec:authorize>
+                <sec:authorize access="isAnonymous()">
+                    <div class="float-end text-end">
+                        <p class="text-muted mb-2 small">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            <spring:message code="cart.guest.message"/>
+                        </p>
+                        <a href="<spring:url value='/connexion'/>" class="btn btn-warning btn-lg">
+                            <spring:message code="cart.guest.login"/>
+                        </a>
+                    </div>
+                </sec:authorize>
             </div>
         </c:when>
         <c:otherwise>

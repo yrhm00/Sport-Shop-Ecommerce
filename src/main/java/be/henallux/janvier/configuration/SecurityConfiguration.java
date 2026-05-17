@@ -38,7 +38,7 @@ public class SecurityConfiguration {
                 // Pages accessibles à tous
                 .antMatchers("/", "/accueil", "/produits/**", "/connexion/**", "/inscription/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 // Pages nécessitant une authentification
-                .antMatchers("/panier/**", "/commandes/**").authenticated()
+                .antMatchers("/commandes/**").authenticated()
                 // Toutes les autres requêtes nécessitent une authentification
                 .anyRequest().authenticated()
             .and()
