@@ -15,11 +15,11 @@ public class InscriptionForm {
     private String username;
 
     @NotNull
-    @Size(min = 6, max = 100)
+    @Size(min = 15, max = 64)
     private String password;
 
     @NotNull
-    @Size(min = 6, max = 100)
+    @Size(min = 15, max = 64)
     private String confirmPassword;
 
     @NotNull
