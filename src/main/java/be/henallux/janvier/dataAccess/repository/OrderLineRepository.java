@@ -11,6 +11,9 @@ public interface OrderLineRepository extends JpaRepository<OrderLineEntity, Inte
     
     // Trouver toutes les lignes d'une commande
     List<OrderLineEntity> findByOrderId(Integer orderId);
+
+    // Supprimer toutes les lignes d'une commande (ex: annulation PayPal)
+    void deleteByOrderId(Integer orderId);
 }
 
 

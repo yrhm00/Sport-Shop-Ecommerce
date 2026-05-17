@@ -2,7 +2,14 @@
 <%@ include file="include/importTags.jsp" %>
 <div class="container mt-4">
     <h1><spring:message code="cart.title"/></h1>
-    
+
+    <c:if test="${param.cancelled == 'true'}">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>Paiement annulé.</strong> Votre panier a été conservé, vous pouvez reprendre votre commande quand vous voulez.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </c:if>
+
     <c:choose>
         <c:when test="${not empty cart.items && cart.items.size() > 0}">
             <div class="table-responsive">

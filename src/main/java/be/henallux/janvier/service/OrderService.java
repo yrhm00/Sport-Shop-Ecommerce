@@ -112,4 +112,12 @@ public class OrderService {
             orderRepository.save(order);
         }
     }
+
+    @Transactional
+    public void deleteOrder(Integer orderId) {
+        if (orderId != null && orderRepository.existsById(orderId)) {
+            orderLineRepository.deleteByOrderId(orderId);
+            orderRepository.deleteById(orderId);
+        }
+    }
 }

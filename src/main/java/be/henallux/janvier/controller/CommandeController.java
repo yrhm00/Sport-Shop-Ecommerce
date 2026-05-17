@@ -93,9 +93,7 @@ public class CommandeController {
                 
                 if (approvalLink != null) {
                     System.out.println("PayPal approval link received, redirecting...");
-                    // Vider le panier maintenant que la commande est enregistrée
-                    cart.clear();
-                    session.setAttribute("cart", cart);
+                    // Ne pas vider le panier ici : l'utilisateur peut annuler sur PayPal
                     return "redirect:" + approvalLink;
                 } else {
                     System.err.println("PayPal approval link is NULL");
@@ -122,15 +120,29 @@ public class CommandeController {
                 orderService.updateOrderPaymentStatus(orderId, true);
                 session.removeAttribute("pendingOrderId");
             }
-            
+
+            // Vider le panier uniquement après un paiement réussi
+            Cart cart = (Cart) session.getAttribute("cart");
+            if (cart != null) {
+                cart.clear();
+                session.setAttribute("cart", cart);
+            }
+
             return "redirect:/commandes/succes";
         }
         return "redirect:/commandes/checkout?error=payment_failed";
     }
 
     @GetMapping("/pay/cancel")
-    public String handlePayCancel() {
-        return "redirect:/commandes/checkout?error=payment_cancelled";
+    public String handlePayCancel(HttpSession session) {
+        // Supprimer la commande en attente (paye=false) créée avant PayPal
+        Integer orderId = (Integer) session.getAttribute("pendingOrderId");
+        if (orderId != null) {
+            orderService.deleteOrder(orderId);
+            session.removeAttribute("pendingOrderId");
+        }
+        // Rediriger vers le panier : il est toujours intact
+        return "redirect:/panier?cancelled=true";
     }
 
     /**
