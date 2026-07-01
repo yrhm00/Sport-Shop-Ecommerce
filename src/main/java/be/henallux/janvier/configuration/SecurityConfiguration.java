@@ -52,10 +52,10 @@ public class SecurityConfiguration {
             .logout()
                 .logoutUrl("/deconnexion")
                 .logoutSuccessUrl("/?logout")
-                .permitAll()
-            .and()
-            .csrf().disable(); 
-            
+                .permitAll();
+            // La protection CSRF est activée par défaut (Spring Security).
+            // Chaque formulaire POST envoie le jeton via ${_csrf} ou <form:form>.
+
         return http.build();
     }
 }

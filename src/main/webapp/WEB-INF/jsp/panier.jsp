@@ -36,6 +36,7 @@
                                 <td><fmt:formatNumber value="${item.product.prix}" type="currency" currencySymbol="€" minFractionDigits="2" /></td>
                                 <td>
                                     <form method="post" action="<spring:url value='/panier/modifier'/>" class="d-inline">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                         <input type="hidden" name="productId" value="${item.product.id}" />
                                         <c:if test="${not empty item.taille}">
                                             <input type="hidden" name="taille" value="${item.taille}" />

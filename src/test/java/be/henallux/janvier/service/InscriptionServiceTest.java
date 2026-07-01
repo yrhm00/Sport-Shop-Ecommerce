@@ -11,7 +11,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import be.henallux.janvier.dataAccess.dao.UserDAO;
-import be.henallux.janvier.model.User;
 
 public class InscriptionServiceTest {
 
@@ -47,10 +46,19 @@ public class InscriptionServiceTest {
 
     @Test
     public void testUsernameExists() {
-        when(userDAO.findByUsername("existingUser")).thenReturn(new User());
-        when(userDAO.findByUsername("newUser")).thenReturn(null);
+        when(userDAO.existsByUsername("existingUser")).thenReturn(true);
+        when(userDAO.existsByUsername("newUser")).thenReturn(false);
 
         assertTrue(inscriptionService.usernameExists("existingUser"));
         assertFalse(inscriptionService.usernameExists("newUser"));
+    }
+
+    @Test
+    public void testEmailExists() {
+        when(userDAO.existsByEmail("used@email.be")).thenReturn(true);
+        when(userDAO.existsByEmail("free@email.be")).thenReturn(false);
+
+        assertTrue(inscriptionService.emailExists("used@email.be"));
+        assertFalse(inscriptionService.emailExists("free@email.be"));
     }
 }

@@ -31,7 +31,10 @@
                         <spring:message code="menu.welcome"/>, <sec:authentication property="principal.prenom" />
                     </span>
                     <a href="<spring:url value='/profil'/>" class="btn btn-outline-primary me-2"><spring:message code="menu.profile"/></a>
-                    <a href="<spring:url value='/deconnexion'/>" class="btn btn-outline-danger"><spring:message code="menu.logout"/></a>
+                    <form method="post" action="<spring:url value='/deconnexion'/>" class="d-inline">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-outline-danger"><spring:message code="menu.logout"/></button>
+                    </form>
                 </sec:authorize>
                 
                 <!-- Si l'utilisateur n'est PAS connecté -->

@@ -39,6 +39,7 @@
 
         <!-- Formulaire -->
         <form method="post" action="<spring:url value='/connexion'/>" class="mt-4">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="username" name="username" placeholder="name" required />
                 <label for="username"><spring:message code="user.username"/></label>

@@ -39,7 +39,6 @@ public class InscriptionForm {
     private String telephone;
 
     @NotNull
-    @NotNull
     @Size(min = 10, max = 500)
     private String adresse;
 

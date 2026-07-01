@@ -9,9 +9,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/janvier_db?useUnicode=true&characterEncoding=UTF-8
-    username: postgres
-    password: Ilies2004_
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/janvier_db?useUnicode=true&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Ilies2004_}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -36,6 +36,6 @@ spring:
       suffix: .jsp
 
 paypal:
-  client-id: ASXWWhLhd_mx15AtVETBFrxq-4KsZicGJnon4ppqKqapddF8Ugkov7T4zRZNhtCWm5-szWaVu3Sj3ive
-  client-secret: EKXVHcJ9TfPvJn08uuhEQZEkviCVHL7OXLK0YFRkUDNg1ozIXjL_yKlB6GWPXo99QzgMDvP_OBLcVjnr
-  mode: sandbox
+  client-id: ${PAYPAL_CLIENT_ID:ASXWWhLhd_mx15AtVETBFrxq-4KsZicGJnon4ppqKqapddF8Ugkov7T4zRZNhtCWm5-szWaVu3Sj3ive}
+  client-secret: ${PAYPAL_CLIENT_SECRET:EKXVHcJ9TfPvJn08uuhEQZEkviCVHL7OXLK0YFRkUDNg1ozIXjL_yKlB6GWPXo99QzgMDvP_OBLcVjnr}
+  mode: ${PAYPAL_MODE:sandbox}

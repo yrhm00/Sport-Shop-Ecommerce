@@ -32,75 +32,44 @@ public class OrderService {
 
     @Transactional
     public Integer createOrder(Cart cart, String username, boolean isPaid) {
-        System.out.println("=== OrderService.createOrder START ===");
-        System.out.println("Username: " + username);
-        System.out.println("isPaid: " + isPaid);
-        System.out.println("Cart: " + (cart != null ? "EXISTS" : "NULL"));
-        System.out.println("Cart items: " + (cart != null ? cart.getItems().size() : "N/A"));
-        
         if (cart == null || cart.getItems().isEmpty()) {
-            System.err.println("Cart is null or empty, returning null");
             return null;
         }
 
         // Récupérer l'utilisateur
-        System.out.println("Fetching user from database...");
         UserEntity user = userRepository.findByUsername(username);
         if (user == null) {
-            System.err.println("User not found: " + username);
             return null;
         }
-        System.out.println("User found: ID=" + user.getId());
 
         // Créer la commande
-        System.out.println("Creating order entity...");
         OrderEntity order = new OrderEntity();
         order.setDateCommande(LocalDateTime.now());
         order.setUserId(user.getId());
         order.setPaye(isPaid);
-        
+
         // Calculer le total (en prenant en compte la réduction du panier)
-        BigDecimal total = cart.getTotalWithDiscount();
-        System.out.println("Order total: " + total);
-        order.setMontantTotal(total);
+        order.setMontantTotal(cart.getTotalWithDiscount());
+        order = orderRepository.save(order);
 
-        try {
-            System.out.println("Saving order to database...");
-            order = orderRepository.save(order);
-            System.out.println("Order saved with ID: " + order.getId());
-        } catch (Exception e) {
-            System.err.println("ERROR saving order: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-
-        // Sauvegarder les lignes
-        System.out.println("Saving order lines...");
+        // Sauvegarder les lignes de commande
         for (CartItem item : cart.getItems()) {
-            System.out.println("  - Product ID: " + item.getProduct().getId() + ", Qty: " + item.getQuantite());
             OrderLineEntity line = new OrderLineEntity();
             line.setOrder(order);
             line.setOrderId(order.getId()); // Important : définir explicitement l'ID
             line.setProductId(item.getProduct().getId());
             line.setQuantite(item.getQuantite());
-            
-            // Gestion du prix (avec promotion potentielle)
-            BigDecimal realPrice = item.getProduct().getPrix(); 
+
+            // Prix unitaire au moment de la commande
+            BigDecimal realPrice = item.getProduct().getPrix();
             if (realPrice == null) {
                 realPrice = BigDecimal.ZERO;
             }
             line.setPrixUnitaire(realPrice);
-            
-            try {
-                orderLineRepository.save(line);
-                System.out.println("  - Order line saved");
-            } catch (Exception e) {
-                System.err.println("  - ERROR saving order line: " + e.getMessage());
-                e.printStackTrace();
-            }
+
+            orderLineRepository.save(line);
         }
 
-        System.out.println("=== OrderService.createOrder END - Returning ID: " + order.getId() + " ===");
         return order.getId();
     }
 
