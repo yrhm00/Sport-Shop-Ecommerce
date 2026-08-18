@@ -1,15 +1,15 @@
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="../include/importTags.jsp" %>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${pageContext.response.locale.language}">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><tiles:insertAttribute name="titre" /></title>
-    <!-- Bootstrap CSS comme demandé -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { padding-top: 20px; }
-        .footer { margin-top: 50px; padding: 20px; background-color: #f8f9fa; }
-    </style>
+    <%-- Bootstrap et la feuille de style du site sont servis par l'application
+         elle-meme : la CSP (style-src 'self') interdit les CDN et les styles inline. --%>
+    <link href="<spring:url value='/css/bootstrap.min.css'/>" rel="stylesheet">
+    <link href="<spring:url value='/css/app.css'/>" rel="stylesheet">
 </head>
 <body>
 
@@ -28,7 +28,7 @@
         </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<spring:url value='/js/bootstrap.bundle.min.js'/>"></script>
+    <script src="<spring:url value='/js/app.js'/>"></script>
 </body>
 </html>
-

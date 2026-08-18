@@ -2,137 +2,200 @@ package be.henallux.janvier.controller;
 
 import java.security.Principal;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import be.henallux.janvier.model.Cart;
+import be.henallux.janvier.model.Order;
 import be.henallux.janvier.service.OrderService;
+import be.henallux.janvier.service.PaymentService;
+import be.henallux.janvier.service.PromotionService;
 
+/**
+ * Parcours de commande et de paiement.
+ *
+ * La commande est enregistree en base AVANT le paiement, avec le statut
+ * EN_ATTENTE. Si le client abandonne sur PayPal, la commande n'est pas
+ * supprimee : il choisit de payer plus tard ou de l'annuler explicitement.
+ */
 @Controller
-@RequestMapping(value="/commandes")
+@RequestMapping(value = "/commandes")
 public class CommandeController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommandeController.class);
+    private static final String PENDING_ORDER_KEY = "pendingOrderId";
+
     private final OrderService orderService;
-    private final be.henallux.janvier.service.PromotionService promotionService;
-    private final be.henallux.janvier.service.PaymentService paymentService;
+    private final PromotionService promotionService;
+    private final PaymentService paymentService;
 
     @Autowired
-    public CommandeController(OrderService orderService, 
-                              be.henallux.janvier.service.PromotionService promotionService,
-                              be.henallux.janvier.service.PaymentService paymentService) {
+    public CommandeController(OrderService orderService, PromotionService promotionService,
+                              PaymentService paymentService) {
         this.orderService = orderService;
         this.promotionService = promotionService;
         this.paymentService = paymentService;
     }
 
-    /**
-     * Affiche le récapitulatif avant confirmation
-     */
+    /** Recapitulatif avant confirmation. */
     @GetMapping("/checkout")
-    public String checkout(HttpSession session, Model model, Principal principal) {
-        if (principal == null) {
-            return "redirect:/connexion";
-        }
-        
+    public String checkout(HttpSession session, Model model) {
         Cart cart = (Cart) session.getAttribute("cart");
         if (cart == null || cart.getItems().isEmpty()) {
             return "redirect:/panier";
         }
-        
-        // Recalculer la promo pour être sûr
-        java.math.BigDecimal discount = promotionService.calculateDiscount(cart.getTotal());
-        cart.setDiscountAmount(discount);
-        
+
+        cart.setDiscountAmount(promotionService.calculateDiscount(cart.getTotal()));
         model.addAttribute("cart", cart);
-        return "checkout"; // page de confirmation
+        return "checkout";
     }
 
-    /**
-     * Confirme la commande
-     */
+    /** Confirmation : enregistrement de la commande puis redirection vers PayPal. */
     @PostMapping("/confirmer")
-    public String confirmOrder(HttpSession session, Principal principal,
-                               javax.servlet.http.HttpServletRequest request,
+    public String confirmOrder(HttpSession session, Principal principal, HttpServletRequest request,
                                Model model) {
-        if (principal == null) {
-            return "redirect:/connexion";
+        Cart cart = (Cart) session.getAttribute("cart");
+        if (cart == null || cart.getItems().isEmpty()) {
+            return "redirect:/panier";
         }
 
-        Cart cart = (Cart) session.getAttribute("cart");
+        cart.setDiscountAmount(promotionService.calculateDiscount(cart.getTotal()));
 
-        if (cart != null && !cart.getItems().isEmpty()) {
-            // Enregistrer la commande AVANT le paiement, avec paye = false
-            Integer orderId = orderService.createOrder(cart, principal.getName(), false);
-
-            if (orderId != null) {
-                // Stocker l'ID de commande en session pour mise à jour après paiement
-                session.setAttribute("pendingOrderId", orderId);
-
-                String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
-                String returnUrl = baseUrl + "/commandes/pay/success";
-                String cancelUrl = baseUrl + "/commandes/pay/cancel";
-
-                String approvalLink = paymentService.createOrder(cart.getTotalWithDiscount(), returnUrl, cancelUrl);
-
-                if (approvalLink != null) {
-                    // Ne pas vider le panier ici : l'utilisateur peut annuler sur PayPal
-                    return "redirect:" + approvalLink;
-                }
-            }
-
-            model.addAttribute("paymentError", "error.payment.init");
+        // La commande est enregistree AVANT toute tentative de paiement.
+        Order order = orderService.createOrder(cart, principal.getName());
+        if (order == null) {
+            model.addAttribute("paymentError", "error.order.creation");
             model.addAttribute("cart", cart);
             return "checkout";
         }
 
-        return "redirect:/produits";
+        session.setAttribute(PENDING_ORDER_KEY, order.getId());
+
+        String lienPaiement = demanderPaiement(order, request);
+        if (lienPaiement == null) {
+            // Le paiement n'a pas pu demarrer : la commande reste en attente.
+            return "redirect:/commandes/" + order.getId() + "/attente?error=payment_init";
+        }
+        return "redirect:" + lienPaiement;
     }
 
+    /** Relance du paiement d'une commande restee en attente. */
+    @PostMapping("/{orderId}/payer")
+    public String payerCommandeEnAttente(@PathVariable Integer orderId, Principal principal,
+                                         HttpServletRequest request, HttpSession session,
+                                         RedirectAttributes redirectAttributes) {
+        Order order = orderService.getOrder(orderId);
+        if (!orderService.appartientA(order, principal.getName()) || !order.isEnAttente()) {
+            return "redirect:/commandes/mes-commandes";
+        }
+
+        session.setAttribute(PENDING_ORDER_KEY, order.getId());
+        String lienPaiement = demanderPaiement(order, request);
+        if (lienPaiement == null) {
+            redirectAttributes.addAttribute("error", "payment_init");
+            return "redirect:/commandes/" + orderId + "/attente";
+        }
+        return "redirect:" + lienPaiement;
+    }
+
+    /** Annulation explicite par le client : la commande reste en base, statut ANNULEE. */
+    @PostMapping("/{orderId}/annuler")
+    public String annulerCommande(@PathVariable Integer orderId, Principal principal,
+                                  RedirectAttributes redirectAttributes) {
+        Order order = orderService.getOrder(orderId);
+        if (orderService.appartientA(order, principal.getName())) {
+            orderService.annuler(orderId);
+            redirectAttributes.addFlashAttribute("infoMessage", "order.cancelled.confirmation");
+        }
+        return "redirect:/commandes/mes-commandes";
+    }
+
+    /** Retour de PayPal apres validation du paiement. */
     @GetMapping("/pay/success")
-    public String handlePaySuccess(@org.springframework.web.bind.annotation.RequestParam("token") String token, HttpSession session, Principal principal) {
-        if (paymentService.captureOrder(token)) {
-            // Mettre à jour le statut de paiement de la commande
-            Integer orderId = (Integer) session.getAttribute("pendingOrderId");
-            if (orderId != null) {
-                orderService.updateOrderPaymentStatus(orderId, true);
-                session.removeAttribute("pendingOrderId");
-            }
+    public String handlePaySuccess(@RequestParam("token") String token, HttpSession session,
+                                   Principal principal) {
+        Integer orderId = (Integer) session.getAttribute(PENDING_ORDER_KEY);
+        Order order = orderService.getOrder(orderId);
 
-            // Vider le panier uniquement après un paiement réussi
-            Cart cart = (Cart) session.getAttribute("cart");
-            if (cart != null) {
-                cart.clear();
-                session.setAttribute("cart", cart);
-            }
-
-            return "redirect:/commandes/succes";
+        if (order == null || !orderService.appartientA(order, principal.getName())) {
+            return "redirect:/commandes/mes-commandes";
         }
-        return "redirect:/commandes/checkout?error=payment_failed";
-    }
 
-    @GetMapping("/pay/cancel")
-    public String handlePayCancel(HttpSession session) {
-        // Supprimer la commande en attente (paye=false) créée avant PayPal
-        Integer orderId = (Integer) session.getAttribute("pendingOrderId");
-        if (orderId != null) {
-            orderService.deleteOrder(orderId);
-            session.removeAttribute("pendingOrderId");
+        if (!paymentService.captureOrder(token)) {
+            LOGGER.warn("Capture PayPal refusee pour la commande {}", orderId);
+            return "redirect:/commandes/" + orderId + "/attente?error=payment_failed";
         }
-        // Rediriger vers le panier : il est toujours intact
-        return "redirect:/panier?cancelled=true";
+
+        orderService.marquerPayee(orderId);
+        session.removeAttribute(PENDING_ORDER_KEY);
+
+        // Le panier n'est vide qu'une fois le paiement reellement encaisse.
+        Cart cart = (Cart) session.getAttribute("cart");
+        if (cart != null) {
+            cart.clear();
+            session.setAttribute("cart", cart);
+        }
+
+        return "redirect:/commandes/succes";
     }
 
     /**
-     * Page de succès
+     * Retour de PayPal apres abandon : on informe le client et on lui laisse le
+     * choix entre payer plus tard et annuler la commande.
      */
+    @GetMapping("/pay/cancel")
+    public String handlePayCancel(HttpSession session) {
+        Integer orderId = (Integer) session.getAttribute(PENDING_ORDER_KEY);
+        if (orderId == null) {
+            return "redirect:/panier";
+        }
+        return "redirect:/commandes/" + orderId + "/attente?error=payment_cancelled";
+    }
+
+    /** Ecran d'une commande en attente de paiement. */
+    @GetMapping("/{orderId}/attente")
+    public String commandeEnAttente(@PathVariable Integer orderId, Principal principal, Model model,
+                                    @RequestParam(required = false) String error) {
+        Order order = orderService.getOrder(orderId);
+        if (!orderService.appartientA(order, principal.getName())) {
+            return "redirect:/commandes/mes-commandes";
+        }
+
+        model.addAttribute("order", order);
+        model.addAttribute("erreurPaiement", error);
+        return "commande-attente";
+    }
+
+    /** Historique des commandes du client connecte. */
+    @GetMapping("/mes-commandes")
+    public String mesCommandes(Principal principal, Model model) {
+        model.addAttribute("orders", orderService.getOrdersOfUser(principal.getName()));
+        return "mes-commandes";
+    }
+
     @GetMapping("/succes")
     public String success() {
-        return "commande-succes"; 
+        return "commande-succes";
+    }
+
+    /** Cree la commande PayPal et renvoie l'URL d'approbation (null en cas d'echec). */
+    private String demanderPaiement(Order order, HttpServletRequest request) {
+        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":"
+                + request.getServerPort() + request.getContextPath();
+        return paymentService.createOrder(order.getMontantTotal(),
+                baseUrl + "/commandes/pay/success",
+                baseUrl + "/commandes/pay/cancel");
     }
 }

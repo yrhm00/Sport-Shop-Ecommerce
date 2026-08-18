@@ -19,6 +19,9 @@ public class OrderLineEntity implements Serializable {
     @Column(name = "product_id", nullable = false)
     private Integer productId;
 
+    @Column(name = "taille", length = 10)
+    private String taille;
+
     @Column(name = "quantite", nullable = false)
     private Integer quantite;
 
@@ -67,6 +70,14 @@ public class OrderLineEntity implements Serializable {
 
     public void setProductId(Integer productId) {
         this.productId = productId;
+    }
+
+    public String getTaille() {
+        return taille;
+    }
+
+    public void setTaille(String taille) {
+        this.taille = taille;
     }
 
     public Integer getQuantite() {

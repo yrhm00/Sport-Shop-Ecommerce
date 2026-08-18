@@ -1,0 +1,90 @@
+/* ============================================================
+   JogginApp E-Shop - feuille de style de l'application
+   ------------------------------------------------------------
+   Toute la mise en forme propre au site est regroupee ici.
+   Aucun style n'est ecrit dans les pages JSP : la politique de
+   securite du contenu (CSP) n'autorise que les feuilles de style
+   servies par le site lui-meme (style-src 'self').
+   ============================================================ */
+
+:root {
+    --joggin-hauteur-image-categorie: 200px;
+    --joggin-hauteur-vignette-produit: 250px;
+    --joggin-hauteur-image-detail: 400px;
+    --joggin-largeur-champ-court: 200px;
+}
+
+body {
+    padding-top: 20px;
+}
+
+/* ---------- Pied de page ---------- */
+.footer {
+    margin-top: 50px;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+/* ---------- Images de catalogue ---------- */
+.joggin-image-categorie {
+    height: var(--joggin-hauteur-image-categorie);
+    object-fit: cover;
+}
+
+.joggin-vignette-produit {
+    height: var(--joggin-hauteur-vignette-produit);
+}
+
+.joggin-vignette-produit img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.joggin-image-detail {
+    max-height: var(--joggin-hauteur-image-detail);
+}
+
+/* ---------- Accueil ---------- */
+.joggin-hero-image {
+    max-height: var(--joggin-hauteur-image-detail);
+}
+
+.joggin-image-couvrante {
+    object-fit: cover;
+    height: 100%;
+}
+
+.joggin-image-promo {
+    object-fit: cover;
+    filter: brightness(0.6);
+}
+
+/* ---------- Authentification ---------- */
+.joggin-colonne-illustration {
+    min-height: 80vh;
+}
+
+.joggin-illustration {
+    object-fit: cover;
+}
+
+/* ---------- Formulaires ---------- */
+.joggin-champ-court {
+    max-width: var(--joggin-largeur-champ-court);
+}
+
+.joggin-champ-quantite {
+    width: 80px;
+    display: inline-block;
+}
+
+/* ---------- Effet de survol des cartes ---------- */
+.transition-hover {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.transition-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}

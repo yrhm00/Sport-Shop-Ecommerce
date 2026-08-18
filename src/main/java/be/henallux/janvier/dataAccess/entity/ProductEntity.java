@@ -55,9 +55,6 @@ public class ProductEntity implements Serializable {
     @JoinColumn(name = "category_id", referencedColumnName = "id", insertable = false, updatable = false)
     private CategoryEntity category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private Set<ProductTranslationEntity> translations = new HashSet<>();
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<ProductSizeEntity> sizes = new HashSet<>();
 
@@ -154,14 +151,6 @@ public class ProductEntity implements Serializable {
 
     public void setCategory(CategoryEntity category) {
         this.category = category;
-    }
-
-    public Set<ProductTranslationEntity> getTranslations() {
-        return translations;
-    }
-
-    public void setTranslations(Set<ProductTranslationEntity> translations) {
-        this.translations = translations;
     }
 
     public Set<ProductSizeEntity> getSizes() {

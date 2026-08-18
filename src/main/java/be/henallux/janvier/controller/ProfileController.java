@@ -1,9 +1,10 @@
 package be.henallux.janvier.controller;
 
+import java.security.Principal;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,92 +13,56 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import be.henallux.janvier.dataAccess.dao.UserDAO;
+import be.henallux.janvier.model.ProfileForm;
 import be.henallux.janvier.model.User;
+import be.henallux.janvier.service.UserService;
 
 @Controller
-@RequestMapping(value="/profil")
+@RequestMapping(value = "/profil")
 public class ProfileController {
 
-    private final UserDAO userDAO;
+    private final UserService userService;
 
     @Autowired
-    public ProfileController(UserDAO userDAO) {
-        this.userDAO = userDAO;
+    public ProfileController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping
-    public String showProfile(Model model, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/connexion";
-        }
-        
-        String username = authentication.getName();
-        User user = userDAO.findByUsername(username);
-        
+    public String showProfile(Model model, Principal principal) {
+        User user = userService.getByUsername(principal.getName());
         if (user == null) {
             return "redirect:/deconnexion";
         }
-        
-        // On ne veut pas afficher le mot de passe hashé
-        user.setPassword(null);
-        
-        model.addAttribute("user", user);
+
+        model.addAttribute("profileForm", ProfileForm.depuis(user));
         return "profil";
     }
 
     @PostMapping
-    public String updateProfile(@Valid @ModelAttribute("user") User formUser,
-                               BindingResult bindingResult,
-                               Model model,
-                               Authentication authentication) {
-        
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/connexion";
-        }
+    public String updateProfile(@Valid @ModelAttribute("profileForm") ProfileForm profileForm,
+                                BindingResult bindingResult, Model model, Principal principal) {
+
+        // Le username affiche vient toujours du compte connecte, jamais du formulaire.
+        String username = principal.getName();
+        profileForm.setUsername(username);
 
         if (bindingResult.hasErrors()) {
             return "profil";
         }
 
-        String currentUsername = authentication.getName();
-        User currentUser = userDAO.findByUsername(currentUsername);
-        
-        // Vérifier que l'utilisateur existe
-        if (currentUser == null) {
-            model.addAttribute("errorMessage", "Utilisateur introuvable.");
-            return "profil";
-        }
-        
-        // Empêcher la modification du username si le formulaire a été trafiqué
-        if (!currentUsername.equals(formUser.getUsername())) {
-             model.addAttribute("errorMessage", "Impossible de modifier le nom d'utilisateur.");
-             return "profil";
-        }
-
-        // Mise à jour des champs autorisés
-        currentUser.setNom(formUser.getNom());
-        currentUser.setPrenom(formUser.getPrenom());
-        currentUser.setEmail(formUser.getEmail());
-        currentUser.setTelephone(formUser.getTelephone());
-        currentUser.setAdresse(formUser.getAdresse());
-        
-        // On garde le mot de passe existant 
-        // On garde enabled et authorities
-        
-        try {
-            userDAO.save(currentUser);
-            model.addAttribute("successMessage", "Profil mis à jour avec succès!");
-            // Recharger l'utilisateur pour l'affichage
-            
-            // Mais on doit masquer le password
-            currentUser.setPassword(null);
-            model.addAttribute("user", currentUser); 
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Erreur lors de la mise à jour: " + e.getMessage());
+        if (userService.emailUtiliseParUnAutre(username, profileForm.getEmail())) {
+            model.addAttribute("errorMessage", "inscription.error.emailExists");
             return "profil";
         }
 
+        User misAJour = userService.mettreAJourProfil(username, profileForm);
+        if (misAJour == null) {
+            model.addAttribute("errorMessage", "error.profile.update");
+            return "profil";
+        }
+
+        model.addAttribute("successMessage", "profile.updated");
         return "profil";
     }
 }

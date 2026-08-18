@@ -17,11 +17,14 @@ public class InscriptionService {
 
     private final UserDataAccess userDAO;
     private final PasswordEncoder passwordEncoder;
+    private final SanitizationService sanitizationService;
 
     @Autowired
-    public InscriptionService(UserDataAccess userDAO, PasswordEncoder passwordEncoder) {
+    public InscriptionService(UserDataAccess userDAO, PasswordEncoder passwordEncoder,
+                              SanitizationService sanitizationService) {
         this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
+        this.sanitizationService = sanitizationService;
     }
 
     /**
@@ -50,16 +53,17 @@ public class InscriptionService {
      */
     public User createUser(InscriptionForm form) {
         // Créer l'utilisateur
+        // Les champs libres sont nettoyes de tout balisage HTML avant enregistrement.
         User user = new User();
-        user.setUsername(form.getUsername());
-        user.setPassword(passwordEncoder.encode(form.getPassword())); 
-        user.setNom(form.getNom());
-        user.setPrenom(form.getPrenom());
-        user.setEmail(form.getEmail());
-        user.setTelephone(form.getTelephone());
-        user.setAdresse(form.getAdresse());
-        user.setCodePostal(form.getCodePostal());
-        user.setLocalite(form.getLocalite());
+        user.setUsername(sanitizationService.nettoyer(form.getUsername()));
+        user.setPassword(passwordEncoder.encode(form.getPassword()));
+        user.setNom(sanitizationService.nettoyer(form.getNom()));
+        user.setPrenom(sanitizationService.nettoyer(form.getPrenom()));
+        user.setEmail(sanitizationService.nettoyer(form.getEmail()));
+        user.setTelephone(sanitizationService.nettoyer(form.getTelephone()));
+        user.setAdresse(sanitizationService.nettoyer(form.getAdresse()));
+        user.setCodePostal(sanitizationService.nettoyer(form.getCodePostal()));
+        user.setLocalite(sanitizationService.nettoyer(form.getLocalite()));
         user.setEnabled(true);
 
         

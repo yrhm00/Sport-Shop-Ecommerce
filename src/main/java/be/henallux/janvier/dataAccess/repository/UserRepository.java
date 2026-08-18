@@ -10,6 +10,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     // Méthode personnalisée pour trouver un utilisateur par username
     UserEntity findByUsername(String username);
     
+    // Méthode personnalisée pour trouver un utilisateur par email
+    UserEntity findByEmail(String email);
+    
     // Méthode pour vérifier si un username existe déjà
     boolean existsByUsername(String username);
     

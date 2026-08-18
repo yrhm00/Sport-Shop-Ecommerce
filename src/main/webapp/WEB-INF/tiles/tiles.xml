@@ -78,5 +78,23 @@
         <put-attribute name="titre" value="Mon Profil" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/profil.jsp" />
     </definition>
+    <!-- Commande en attente de paiement -->
+    <definition name="commande-attente" extends="base.definition">
+        <put-attribute name="titre" value="Commande en attente" />
+        <put-attribute name="contenu" value="/WEB-INF/jsp/commande-attente.jsp" />
+    </definition>
+
+    <!-- Historique des commandes -->
+    <definition name="mes-commandes" extends="base.definition">
+        <put-attribute name="titre" value="Mes commandes" />
+        <put-attribute name="contenu" value="/WEB-INF/jsp/mes-commandes.jsp" />
+    </definition>
+
+    <!-- Page d'erreur (404 / 500) -->
+    <definition name="erreur" extends="base.definition">
+        <put-attribute name="titre" value="Erreur" />
+        <put-attribute name="contenu" value="/WEB-INF/jsp/erreur.jsp" />
+    </definition>
+
 </tiles-definitions>
 

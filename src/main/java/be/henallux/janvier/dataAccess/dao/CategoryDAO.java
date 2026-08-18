@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import be.henallux.janvier.dataAccess.entity.CategoryEntity;
+import be.henallux.janvier.dataAccess.projection.TranslatedCategory;
 import be.henallux.janvier.dataAccess.repository.CategoryRepository;
 import be.henallux.janvier.dataAccess.util.ProviderConverter;
 import be.henallux.janvier.model.Category;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class CategoryDAO implements CategoryDataAccess {
 
     private final CategoryRepository repository;
@@ -26,29 +26,27 @@ public class CategoryDAO implements CategoryDataAccess {
     }
 
     @Override
-    public List<Category> findAll() {
-        List<CategoryEntity> entities = repository.findAllByOrderByNomAsc();
+    public List<Category> findAll(String langue) {
         List<Category> categories = new ArrayList<>();
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        for (CategoryEntity entity : entities) {
-            categories.add(converter.categoryEntityToModel(entity, language));
+        for (TranslatedCategory translated : repository.findAllTraduit(langue)) {
+            categories.add(converter.translatedCategoryToModel(translated));
         }
         return categories;
     }
 
     @Override
-    public Category findById(Integer id) {
-        CategoryEntity entity = repository.findById(id).orElse(null);
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        return converter.categoryEntityToModel(entity, language);
+    public Category findById(Integer id, String langue) {
+        if (id == null) {
+            return null;
+        }
+        return converter.translatedCategoryToModel(repository.findByIdTraduit(id, langue));
     }
 
     @Override
-    public Category findByCode(String code) {
-        CategoryEntity entity = repository.findByCode(code);
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        return converter.categoryEntityToModel(entity, language);
+    public Category findByCode(String code, String langue) {
+        if (code == null) {
+            return null;
+        }
+        return converter.translatedCategoryToModel(repository.findByCodeTraduit(code, langue));
     }
 }
-
-

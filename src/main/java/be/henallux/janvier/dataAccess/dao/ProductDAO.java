@@ -1,79 +1,89 @@
 package be.henallux.janvier.dataAccess.dao;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import be.henallux.janvier.dataAccess.entity.ProductEntity;
+import be.henallux.janvier.dataAccess.projection.TranslatedProduct;
 import be.henallux.janvier.dataAccess.repository.ProductRepository;
+import be.henallux.janvier.dataAccess.repository.ProductSizeRepository;
 import be.henallux.janvier.dataAccess.util.ProviderConverter;
 import be.henallux.janvier.model.Product;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ProductDAO implements ProductDataAccess {
 
     private final ProductRepository repository;
+    private final ProductSizeRepository sizeRepository;
     private final ProviderConverter converter;
 
     @Autowired
-    public ProductDAO(ProductRepository repository, ProviderConverter converter) {
+    public ProductDAO(ProductRepository repository, ProductSizeRepository sizeRepository,
+                      ProviderConverter converter) {
         this.repository = repository;
+        this.sizeRepository = sizeRepository;
         this.converter = converter;
     }
 
     @Override
-    public List<Product> findAll() {
-        List<ProductEntity> entities = repository.findAll();
-        List<Product> products = new ArrayList<>();
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        for (ProductEntity entity : entities) {
-            products.add(converter.productEntityToModel(entity, language));
+    public List<Product> findAll(String langue) {
+        return convertir(repository.findAllTraduit(langue));
+    }
+
+    @Override
+    public Product findById(Integer id, String langue) {
+        if (id == null) {
+            return null;
         }
-        return products;
+        return converter.translatedProductToModel(repository.findByIdTraduit(id, langue));
     }
 
     @Override
-    public Product findById(Integer id) {
-        ProductEntity entity = repository.findById(id).orElse(null);
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        return converter.productEntityToModel(entity, language);
-    }
-
-    @Override
-    public List<Product> findByCategoryId(Integer categoryId) {
-        List<ProductEntity> entities = repository.findByCategoryIdOrderByNomAsc(categoryId);
-        List<Product> products = new ArrayList<>();
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        for (ProductEntity entity : entities) {
-            products.add(converter.productEntityToModel(entity, language));
+    public List<Product> findByCategoryId(Integer categoryId, String langue) {
+        if (categoryId == null) {
+            return new ArrayList<>();
         }
-        return products;
-    }
-    @Override
-    public List<Product> findNewArrivals() {
-        List<ProductEntity> entities = repository.findTop4ByOrderByCreatedAtDesc();
-        return convertEntitiesToModels(entities);
+        return convertir(repository.findByCategoryIdTraduit(categoryId, langue));
     }
 
     @Override
-    public List<Product> findPromotions() {
-        // Logique métier : les produits > 100€ sont en promo
-        List<ProductEntity> entities = repository.findByPrixGreaterThan(new java.math.BigDecimal("100.00"));
-        return convertEntitiesToModels(entities);
+    public List<Product> findNouveautes(String langue, int limite) {
+        return convertir(repository.findNouveautesTraduit(langue, PageRequest.of(0, limite)));
     }
 
-    private List<Product> convertEntitiesToModels(List<ProductEntity> entities) {
+    @Override
+    public List<Product> findEnPromotion(String langue, LocalDateTime maintenant) {
+        return convertir(repository.findEnPromotionTraduit(langue, maintenant));
+    }
+
+    @Override
+    @Transactional
+    public boolean decrementerStock(Integer productId, String taille, Integer quantite) {
+        if (productId == null || quantite == null || quantite <= 0) {
+            return false;
+        }
+
+        // Si le produit se decline en tailles, c'est le stock de la taille qui fait foi.
+        if (taille != null && !taille.isBlank()) {
+            if (sizeRepository.decrementerStock(productId, taille, quantite) == 0) {
+                return false;
+            }
+        }
+
+        return repository.decrementerStock(productId, quantite) > 0;
+    }
+
+    private List<Product> convertir(List<TranslatedProduct> translatedProducts) {
         List<Product> products = new ArrayList<>();
-        String language = org.springframework.context.i18n.LocaleContextHolder.getLocale().getLanguage();
-        for (ProductEntity entity : entities) {
-            products.add(converter.productEntityToModel(entity, language));
+        for (TranslatedProduct translated : translatedProducts) {
+            products.add(converter.translatedProductToModel(translated));
         }
         return products;
     }
 }
-
-

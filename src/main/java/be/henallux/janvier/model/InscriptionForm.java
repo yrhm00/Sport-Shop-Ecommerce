@@ -1,7 +1,7 @@
 package be.henallux.janvier.model;
 
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -10,27 +10,27 @@ import javax.validation.constraints.Size;
  */
 public class InscriptionForm {
 
-    @NotNull
+    @NotBlank
     @Size(min = 2, max = 50)
     private String username;
 
-    @NotNull
+    @NotBlank
     @Size(min = 15, max = 64)
     private String password;
 
-    @NotNull
+    @NotBlank
     @Size(min = 15, max = 64)
     private String confirmPassword;
 
-    @NotNull
+    @NotBlank
     @Size(min = 2, max = 100)
     private String nom;
 
-    @NotNull
+    @NotBlank
     @Size(min = 2, max = 100)
     private String prenom;
 
-    @NotNull
+    @NotBlank
     @Email
     @Size(max = 150)
     private String email;
@@ -38,20 +38,18 @@ public class InscriptionForm {
     @Pattern(regexp = "^$|^[0-9+ ]{9,20}$", message = "{Pattern.inscriptionForm.telephone}")
     private String telephone;
 
-    @NotNull
+    @NotBlank
     @Size(min = 10, max = 500)
     private String adresse;
 
-    @NotNull
+    @NotBlank
     @Size(min = 4, max = 10)
-    @Pattern(regexp = "^[0-9]*$", message = "Le code postal ne doit contenir que des chiffres.")
+    @Pattern(regexp = "^[0-9]*$", message = "{Pattern.inscriptionForm.codePostal}")
     private String codePostal;
 
-    @NotNull
+    @NotBlank
     @Size(min = 2, max = 100)
     private String localite;
-
-    // ... existing getters/setters ...
 
     public String getCodePostal() {
         return codePostal;

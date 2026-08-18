@@ -1,6 +1,7 @@
 package be.henallux.janvier.controller;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -9,13 +10,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import be.henallux.janvier.exception.RessourceIntrouvableException;
 import be.henallux.janvier.model.Category;
 import be.henallux.janvier.model.Product;
 import be.henallux.janvier.service.CategoryService;
 import be.henallux.janvier.service.ProductService;
 
 @Controller
-@RequestMapping(value="/produits")
+@RequestMapping(value = "/produits")
 public class ProduitController {
 
     private final CategoryService categoryService;
@@ -28,61 +30,52 @@ public class ProduitController {
     }
 
     /**
-     * Affiche la liste des catégories
+     * Affiche la liste des categories.
+     * La langue courante est fournie par Spring MVC et transmise a la couche metier.
      */
     @GetMapping
-    public String showCategories(Model model) {
-        List<Category> categories = categoryService.getAllCategories();
+    public String showCategories(Model model, Locale locale) {
+        List<Category> categories = categoryService.getAllCategories(locale.getLanguage());
         model.addAttribute("categories", categories);
-        return "produits"; // Tiles Definition
+        return "produits";
     }
 
-    /**
-     * Affiche les produits d'une catégorie
-     */
+    /** Affiche les produits d'une categorie. */
     @GetMapping("/categorie/{categoryId}")
-    public String showProductsByCategory(@PathVariable Integer categoryId, Model model) {
-        Category category = categoryService.getCategoryById(categoryId);
-        List<Product> products = productService.getProductsByCategory(categoryId);
-        
+    public String showProductsByCategory(@PathVariable Integer categoryId, Model model, Locale locale) {
+        Category category = categoryService.getCategoryById(categoryId, locale.getLanguage());
+        if (category == null) {
+            throw new RessourceIntrouvableException("error.category.notFound");
+        }
+
         model.addAttribute("category", category);
-        model.addAttribute("products", products);
-        return "produits-liste"; 
+        model.addAttribute("products", productService.getProductsByCategory(categoryId, locale.getLanguage()));
+        return "produits-liste";
     }
 
-    /**
-     * Affiche les détails d'un produit
-     */
+    /** Affiche le detail d'un produit. */
     @GetMapping("/{productId}")
-    public String showProductDetails(@PathVariable Integer productId, Model model) {
-        Product product = productService.getProductById(productId);
+    public String showProductDetails(@PathVariable Integer productId, Model model, Locale locale) {
+        Product product = productService.getProductById(productId, locale.getLanguage());
+        if (product == null) {
+            throw new RessourceIntrouvableException("error.product.notFound");
+        }
+
         model.addAttribute("product", product);
-        return "produit-detail"; 
+        return "produit-detail";
     }
 
     @GetMapping("/nouveautes")
-    public String showNewArrivals(Model model) {
-        List<Product> products = productService.getNewArrivals();
-        
-        // Création d'une catégorie virtuelle pour l'affichage
-        Category category = new Category();
-        category.setNom("Nouveautés");
-        
-        model.addAttribute("category", category);
-        model.addAttribute("products", products);
+    public String showNewArrivals(Model model, Locale locale) {
+        model.addAttribute("titreRubrique", "products.newArrivals");
+        model.addAttribute("products", productService.getNewArrivals(locale.getLanguage()));
         return "produits-liste";
     }
 
     @GetMapping("/promotions")
-    public String showPromotions(Model model) {
-        List<Product> products = productService.getPromotions();
-        
-        // Création d'une catégorie virtuelle pour l'affichage
-        Category category = new Category();
-        category.setNom("Promotions");
-        
-        model.addAttribute("category", category);
-        model.addAttribute("products", products);
+    public String showPromotions(Model model, Locale locale) {
+        model.addAttribute("titreRubrique", "products.promotions");
+        model.addAttribute("products", productService.getPromotions(locale.getLanguage()));
         return "produits-liste";
     }
 }

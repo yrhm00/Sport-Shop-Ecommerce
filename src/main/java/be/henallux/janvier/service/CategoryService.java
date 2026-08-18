@@ -18,15 +18,15 @@ public class CategoryService {
         this.categoryDAO = categoryDAO;
     }
 
-    public List<Category> getAllCategories() {
-        return categoryDAO.findAll();
+    public List<Category> getAllCategories(String langue) {
+        return categoryDAO.findAll(langue);
     }
 
-    public Category getCategoryById(Integer id) {
-        return categoryDAO.findById(id);
+    public Category getCategoryById(Integer id, String langue) {
+        return categoryDAO.findById(id, langue);
     }
 
-    public Category getCategoryByCode(String code) {
-        return categoryDAO.findByCode(code);
+    public Category getCategoryByCode(String code, String langue) {
+        return categoryDAO.findByCode(code, langue);
     }
 }

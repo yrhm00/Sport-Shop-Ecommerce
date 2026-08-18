@@ -32,9 +32,6 @@ public class CategoryEntity implements Serializable {
     private String imageUrl;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private Set<CategoryTranslationEntity> translations = new HashSet<>();
-
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private Set<ProductEntity> products = new HashSet<>();
 
     // Constructeurs
@@ -78,14 +75,6 @@ public class CategoryEntity implements Serializable {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
-    }
-
-    public Set<CategoryTranslationEntity> getTranslations() {
-        return translations;
-    }
-
-    public void setTranslations(Set<CategoryTranslationEntity> translations) {
-        this.translations = translations;
     }
 
     public Set<ProductEntity> getProducts() {

@@ -2,12 +2,11 @@
 <%@ include file="include/importTags.jsp" %>
 <div class="container py-5">
     <h2><spring:message code="checkout.title"/></h2>
+    <p class="text-muted"><spring:message code="checkout.confirmationRequired"/></p>
 
     <c:choose>
-        <c:when test="${empty sessionScope.cart || empty sessionScope.cart.items}">
-            <div class="alert alert-warning">
-                <spring:message code="cart.empty"/>
-            </div>
+        <c:when test="${empty cart.items}">
+            <div class="alert alert-warning"><spring:message code="cart.empty"/></div>
             <a href="<spring:url value='/produits'/>" class="btn btn-primary"><spring:message code="cart.continue"/></a>
         </c:when>
         <c:otherwise>
@@ -15,70 +14,47 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th><spring:message code="product.details"/></th>
-                            <th><spring:message code="product.price"/></th>
-                            <th>Qté</th>
-                            <th>Total</th>
+                            <th><spring:message code="cart.table.product"/></th>
+                            <th><spring:message code="cart.table.unitPrice"/></th>
+                            <th><spring:message code="cart.table.quantity"/></th>
+                            <th><spring:message code="cart.table.subtotal"/></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <c:forEach items="${sessionScope.cart.items}" var="item">
+                        <c:forEach items="${cart.items}" var="item">
                             <tr>
-                                <td>${item.product.nom}</td>
+                                <td>
+                                    <c:out value="${item.product.nom}"/>
+                                    <c:if test="${not empty item.taille}">
+                                        <span class="badge bg-secondary ms-1"><c:out value="${item.taille}"/></span>
+                                    </c:if>
+                                </td>
                                 <td><fmt:formatNumber value="${item.product.prix}" type="currency" currencySymbol="€"/></td>
-                                <td>${item.quantite}</td>
+                                <td><c:out value="${item.quantite}"/></td>
                                 <td><fmt:formatNumber value="${item.sousTotal}" type="currency" currencySymbol="€"/></td>
                             </tr>
                         </c:forEach>
-                        <c:if test="${sessionScope.cart.discountAmount > 0}">
+                        <c:if test="${cart.discountAmount > 0}">
                             <tr>
                                 <td colspan="3" class="text-end text-success fw-bold"><spring:message code="cart.promo.label"/></td>
-                                <td class="text-success fw-bold">- <fmt:formatNumber value="${sessionScope.cart.discountAmount}" type="currency" currencySymbol="€"/></td>
-                            </tr>
-                            <tr>
-                                <td colspan="3" class="text-end fw-bold"><spring:message code="cart.total.pay"/></td>
-                                <td class="fw-bold"><fmt:formatNumber value="${sessionScope.cart.totalWithDiscount}" type="currency" currencySymbol="€"/></td>
+                                <td class="text-success fw-bold">- <fmt:formatNumber value="${cart.discountAmount}" type="currency" currencySymbol="€"/></td>
                             </tr>
                         </c:if>
-                        <c:if test="${sessionScope.cart.discountAmount <= 0}">
-                            <tr>
-                                <td colspan="3" class="text-end fw-bold"><spring:message code="cart.total"/></td>
-                                <td class="fw-bold"><fmt:formatNumber value="${sessionScope.cart.total}" type="currency" currencySymbol="€"/></td>
-                            </tr>
-                        </c:if>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold"><spring:message code="cart.total.pay"/></td>
+                            <td class="fw-bold"><fmt:formatNumber value="${cart.totalWithDiscount}" type="currency" currencySymbol="€"/></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
-            <sec:authorize access="!isAuthenticated()">
-                <div class="alert alert-info">
-                    <spring:message code="checkout.loginRequired"/>
-                </div>
-                <a href="<spring:url value='/connexion'/>" class="btn btn-primary"><spring:message code="menu.login"/></a>
-            </sec:authorize>
+            <c:if test="${not empty paymentError}">
+                <div class="alert alert-danger"><spring:message code="${paymentError}"/></div>
+            </c:if>
 
             <sec:authorize access="isAuthenticated()">
                 <form action="<spring:url value='/commandes/confirmer'/>" method="post" class="mt-4">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                    
-                    <c:if test="${not empty paymentError}">
-                        <div class="alert alert-danger">
-                            <spring:message code="${paymentError}"/>
-                        </div>
-                    </c:if>
-                    <c:if test="${not empty param.error}">
-                        <div class="alert alert-danger">
-                            <c:choose>
-                                <c:when test="${param.error == 'payment_cancelled'}">
-                                    <spring:message code="error.payment.cancelled"/>
-                                </c:when>
-                                <c:otherwise>
-                                    <spring:message code="error.payment.failed"/>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </c:if>
-
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
                             <spring:message code="payment.paypal.header"/>
@@ -86,12 +62,10 @@
                         <div class="card-body text-center">
                             <p class="mb-3"><spring:message code="payment.paypal.redirect"/></p>
                             <button type="submit" class="btn btn-warning btn-lg">
-                                <i class="fab fa-paypal"></i> <spring:message code="payment.paypal.button"/>
+                                <spring:message code="payment.paypal.button"/>
                             </button>
                         </div>
                     </div>
-
-                    <!-- Bouton retiré d'ici car il est maintenant dans le corps de la carte -->
                 </form>
             </sec:authorize>
         </c:otherwise>

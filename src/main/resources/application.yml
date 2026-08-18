@@ -1,31 +1,43 @@
 server:
-  port: 8082
+  port: ${SERVER_PORT:8443}
   servlet:
     context-path: /janvier
     encoding:
       charset: UTF-8
       force: true
       enabled: true
+    session:
+      cookie:
+        http-only: true   # cookie de session inaccessible au JavaScript (anti-vol de session par XSS)
+        secure: true      # cookie transmis uniquement sur HTTPS
+  # TLS : certificat auto-signe genere avec keytool (voir README.md).
+  ssl:
+    enabled: ${SSL_ENABLED:true}
+    key-store: classpath:keystore.p12
+    key-store-type: PKCS12
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:ChangeMe2026}
+    key-alias: jogginapp
 
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/janvier_db?useUnicode=true&characterEncoding=UTF-8}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:Ilies2004_}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: true
+    show-sql: false
+    open-in-view: false
   sql:
     init:
       mode: always
       encoding: UTF-8
-  
+
   messages:
     encoding: UTF-8
     basename: messages
@@ -35,7 +47,13 @@ spring:
       prefix: /WEB-INF/jsp/
       suffix: .jsp
 
+# Identifiants PayPal : jamais en clair dans le depot.
+# A definir dans l'environnement avant de lancer l'application (voir README.md).
 paypal:
-  client-id: ${PAYPAL_CLIENT_ID:ASXWWhLhd_mx15AtVETBFrxq-4KsZicGJnon4ppqKqapddF8Ugkov7T4zRZNhtCWm5-szWaVu3Sj3ive}
-  client-secret: ${PAYPAL_CLIENT_SECRET:EKXVHcJ9TfPvJn08uuhEQZEkviCVHL7OXLK0YFRkUDNg1ozIXjL_yKlB6GWPXo99QzgMDvP_OBLcVjnr}
+  client-id: ${PAYPAL_CLIENT_ID:}
+  client-secret: ${PAYPAL_CLIENT_SECRET:}
   mode: ${PAYPAL_MODE:sandbox}
+
+logging:
+  level:
+    be.henallux.janvier: INFO

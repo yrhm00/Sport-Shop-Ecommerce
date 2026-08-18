@@ -1,19 +1,18 @@
 package be.henallux.janvier.dataAccess.dao;
 
-import be.henallux.janvier.model.Category;
-
 import java.util.List;
 
+import be.henallux.janvier.model.Category;
+
 /**
- * Interface DataAccess pour les catégories
+ * Interface d'acces aux categories.
+ * La langue est un parametre : la couche d'acces aux donnees ne connait pas le web.
  */
 public interface CategoryDataAccess {
-    
-    List<Category> findAll();
-    
-    Category findById(Integer id);
-    
-    Category findByCode(String code);
+
+    List<Category> findAll(String langue);
+
+    Category findById(Integer id, String langue);
+
+    Category findByCode(String code, String langue);
 }
-
-

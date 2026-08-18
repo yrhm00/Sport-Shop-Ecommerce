@@ -11,6 +11,10 @@ import java.util.Set;
 @Table(name = "orders")
 public class OrderEntity implements Serializable {
 
+    public static final String STATUT_EN_ATTENTE = "EN_ATTENTE";
+    public static final String STATUT_PAYEE = "PAYEE";
+    public static final String STATUT_ANNULEE = "ANNULEE";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -25,8 +29,15 @@ public class OrderEntity implements Serializable {
     @Column(name = "montant_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal montantTotal;
 
+    @Column(name = "montant_reduction", nullable = false, precision = 10, scale = 2)
+    private BigDecimal montantReduction = BigDecimal.ZERO;
+
     @Column(name = "paye")
     private Boolean paye = false;
+
+    /** EN_ATTENTE : enregistree avant paiement / PAYEE / ANNULEE. */
+    @Column(name = "statut", nullable = false, length = 20)
+    private String statut = STATUT_EN_ATTENTE;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
@@ -77,6 +88,22 @@ public class OrderEntity implements Serializable {
 
     public void setMontantTotal(BigDecimal montantTotal) {
         this.montantTotal = montantTotal;
+    }
+
+    public BigDecimal getMontantReduction() {
+        return montantReduction;
+    }
+
+    public void setMontantReduction(BigDecimal montantReduction) {
+        this.montantReduction = montantReduction;
+    }
+
+    public String getStatut() {
+        return statut;
+    }
+
+    public void setStatut(String statut) {
+        this.statut = statut;
     }
 
     public Boolean getPaye() {

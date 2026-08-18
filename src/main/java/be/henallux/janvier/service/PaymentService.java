@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,8 @@ import com.paypal.orders.PurchaseUnitRequest;
 @Service
 public class PaymentService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentService.class);
+
     private final PayPalHttpClient payPalHttpClient;
 
     @Autowired
@@ -28,91 +32,57 @@ public class PaymentService {
         this.payPalHttpClient = payPalHttpClient;
     }
 
+    /**
+     * Cree la commande cote PayPal et renvoie l'URL d'approbation.
+     * Renvoie null si PayPal ne repond pas ou refuse la demande.
+     */
     public String createOrder(BigDecimal totalAmount, String returnUrl, String cancelUrl) {
-        System.out.println("=== PayPal Create Order START ===");
-        System.out.println("Amount: " + totalAmount);
-        System.out.println("Return URL: " + returnUrl);
-        System.out.println("Cancel URL: " + cancelUrl);
-        
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.intent("CAPTURE");
 
         ApplicationContext applicationContext = new ApplicationContext()
-                .brandName("Ecommerce Sport Shop")
+                .brandName("JogginApp E-Shop")
                 .landingPage("BILLING")
                 .cancelUrl(cancelUrl)
                 .returnUrl(returnUrl);
         orderRequest.applicationContext(applicationContext);
 
         List<PurchaseUnitRequest> purchaseUnitRequests = new ArrayList<>();
-        
-        String invoiceId = "INV-" + java.util.UUID.randomUUID().toString();
-        System.out.println("Invoice ID: " + invoiceId);
-        
         PurchaseUnitRequest purchaseUnitRequest = new PurchaseUnitRequest()
-                .invoiceId(invoiceId)
+                .invoiceId("INV-" + java.util.UUID.randomUUID())
                 .amount(new AmountWithBreakdown()
-                        .currencyCode("EUR") // Changed from USD to EUR
+                        .currencyCode("EUR")
                         .value(totalAmount.setScale(2, java.math.RoundingMode.HALF_UP).toString()));
         purchaseUnitRequests.add(purchaseUnitRequest);
         orderRequest.purchaseUnits(purchaseUnitRequests);
 
-        OrdersCreateRequest request = new OrdersCreateRequest().requestBody(orderRequest);
-
         try {
-            System.out.println("Sending request to PayPal...");
-            var response = payPalHttpClient.execute(request);
-            Order order = response.result();
-            System.out.println("PayPal Order Created: " + order.id());
-            System.out.println("Order Status: " + order.status());
-            
-            String approvalLink = order.links().stream()
+            Order order = payPalHttpClient.execute(new OrdersCreateRequest().requestBody(orderRequest)).result();
+            LOGGER.info("Commande PayPal creee : {} (statut {})", order.id(), order.status());
+
+            return order.links().stream()
                     .filter(link -> "approve".equals(link.rel()))
                     .findFirst()
-                    .orElseThrow(() -> new NoSuchElementException("No approval link found"))
+                    .orElseThrow(() -> new NoSuchElementException("Lien d'approbation absent de la reponse PayPal"))
                     .href();
-            
-            System.out.println("Approval Link: " + approvalLink);
-            System.out.println("=== PayPal Create Order SUCCESS ===");
-            return approvalLink;
-        } catch (IOException e) {
-            System.err.println("=== PayPal Create Order FAILED (IOException) ===");
-            System.err.println("Error Message: " + e.getMessage());
-            System.err.println("Error Class: " + e.getClass().getName());
-            e.printStackTrace();
-            return null;
-        } catch (NoSuchElementException e) {
-            System.err.println("=== PayPal Create Order FAILED (No Approval Link) ===");
-            System.err.println("Error Message: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        } catch (Exception e) { 
-            System.err.println("=== PayPal Create Order FAILED (Unexpected Error) ===");
-            System.err.println("Error Message: " + e.getMessage());
-            System.err.println("Error Class: " + e.getClass().getName());
-            e.printStackTrace();
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Creation de la commande PayPal impossible", e);
             return null;
         }
     }
 
+    /** Encaisse le paiement. Renvoie vrai uniquement si PayPal confirme la capture. */
     public boolean captureOrder(String orderId) {
         OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
         request.requestBody(new OrderRequest());
 
         try {
-            var response = payPalHttpClient.execute(request);
-            Order order = response.result();
-            System.out.println("PayPal Capture Status: " + order.status()); 
+            Order order = payPalHttpClient.execute(request).result();
+            LOGGER.info("Capture PayPal pour {} : statut {}", orderId, order.status());
             return "COMPLETED".equals(order.status());
-        } catch (IOException e) {
-            System.err.println("PayPal Capture Failed: " + e.getMessage()); 
-            e.printStackTrace();
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Capture du paiement PayPal impossible", e);
             return false;
         }
-    }
-    
-    // Kept for compatibility if needed, but should not be used
-    public boolean processPayPalPayment(String email, String password, BigDecimal amount) {
-        return false;
     }
 }

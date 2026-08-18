@@ -3,17 +3,17 @@
 <div class="container mt-4">
     <h1><spring:message code="cart.title"/></h1>
 
-    <c:if test="${param.cancelled == 'true'}">
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>Paiement annulé.</strong> Votre panier a été conservé, vous pouvez reprendre votre commande quand vous voulez.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <c:if test="${not empty cartError}">
+        <div class="alert alert-danger"><spring:message code="${cartError}"/></div>
+    </c:if>
+    <c:if test="${not empty cartSuccess}">
+        <div class="alert alert-success"><spring:message code="${cartSuccess}"/></div>
     </c:if>
 
     <c:choose>
-        <c:when test="${not empty cart.items && cart.items.size() > 0}">
+        <c:when test="${not empty cart.items}">
             <div class="table-responsive">
-                <table class="table table-bordered">
+                <table class="table table-bordered align-middle">
                     <thead>
                         <tr>
                             <th><spring:message code="cart.table.product"/></th>
@@ -27,11 +27,11 @@
                         <c:forEach items="${cart.items}" var="item">
                             <tr>
                                 <td>
-                                    <strong>${item.product.nom}</strong>
+                                    <strong><c:out value="${item.product.nom}"/></strong>
                                     <c:if test="${not empty item.taille}">
-                                        <span class="badge bg-secondary ms-1">${item.taille}</span>
+                                        <span class="badge bg-secondary ms-1"><c:out value="${item.taille}"/></span>
                                     </c:if><br>
-                                    <small class="text-muted">${item.product.description}</small>
+                                    <small class="text-muted"><c:out value="${item.product.description}"/></small>
                                 </td>
                                 <td><fmt:formatNumber value="${item.product.prix}" type="currency" currencySymbol="€" minFractionDigits="2" /></td>
                                 <td>
@@ -39,31 +39,29 @@
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                         <input type="hidden" name="productId" value="${item.product.id}" />
                                         <c:if test="${not empty item.taille}">
-                                            <input type="hidden" name="taille" value="${item.taille}" />
+                                            <input type="hidden" name="taille" value="<c:out value='${item.taille}'/>" />
                                         </c:if>
-                                        <input type="number" name="quantite" value="${item.quantite}" min="1" max="${item.product.stock}" 
-                                               class="form-control form-control-sm" style="width: 80px; display: inline-block;" />
+                                        <input type="number" name="quantite" value="${item.quantite}" min="1"
+                                               max="${item.product.stock}" class="form-control form-control-sm joggin-champ-quantite" />
                                         <button type="submit" class="btn btn-sm btn-outline-primary"><spring:message code="cart.btn.modify"/></button>
                                     </form>
                                 </td>
                                 <td><strong><fmt:formatNumber value="${item.sousTotal}" type="currency" currencySymbol="€" minFractionDigits="2" /></strong></td>
                                 <td>
-                                    <spring:url value='/panier/supprimer/${item.product.id}' var="deleteUrl">
+                                    <%-- Suppression en POST, avec confirmation geree par app.js --%>
+                                    <form method="post" action="<spring:url value='/panier/supprimer/${item.product.id}'/>"
+                                          class="d-inline" data-confirm="<spring:message code='cart.confirm.delete'/>">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                         <c:if test="${not empty item.taille}">
-                                            <spring:param name="taille" value="${item.taille}"/>
+                                            <input type="hidden" name="taille" value="<c:out value='${item.taille}'/>" />
                                         </c:if>
-                                    </spring:url>
-                                    <a href="${deleteUrl}" 
-                                       class="btn btn-sm btn-danger"
-                                       onclick="return confirm('<spring:message code="cart.confirm.delete" javaScriptEscape="true"/>')">
-                                        <spring:message code="cart.btn.delete"/>
-                                    </a>
+                                        <button type="submit" class="btn btn-sm btn-danger"><spring:message code="cart.btn.delete"/></button>
+                                    </form>
                                 </td>
                             </tr>
                         </c:forEach>
                     </tbody>
                     <tfoot>
-                        <!-- Ligne Promotion -->
                         <c:if test="${cart.discountAmount > 0}">
                             <tr>
                                 <td colspan="3" class="text-end text-success"><strong><spring:message code="cart.promo.label"/></strong></td>
@@ -83,15 +81,16 @@
                     </tfoot>
                 </table>
             </div>
-            
+
             <div class="mt-4">
                 <a href="<spring:url value='/produits'/>" class="btn btn-outline-secondary"><spring:message code="cart.continue"/></a>
-                <a href="<spring:url value='/panier/vider'/>" class="btn btn-outline-danger"
-                   onclick="return confirm('<spring:message code="cart.confirm.empty" javaScriptEscape="true"/>')">
-                    <spring:message code="cart.btn.empty"/>
-                </a>
 
-                <%-- Bouton commander : connecté → checkout, invité → connexion --%>
+                <form method="post" action="<spring:url value='/panier/vider'/>" class="d-inline"
+                      data-confirm="<spring:message code='cart.confirm.empty'/>">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-outline-danger"><spring:message code="cart.btn.empty"/></button>
+                </form>
+
                 <sec:authorize access="isAuthenticated()">
                     <a href="<spring:url value='/commandes/checkout'/>" class="btn btn-success btn-lg float-end">
                         <spring:message code="cart.btn.validate"/>
@@ -99,10 +98,7 @@
                 </sec:authorize>
                 <sec:authorize access="isAnonymous()">
                     <div class="float-end text-end">
-                        <p class="text-muted mb-2 small">
-                            <i class="bi bi-lock-fill me-1"></i>
-                            <spring:message code="cart.guest.message"/>
-                        </p>
+                        <p class="text-muted mb-2 small"><spring:message code="cart.guest.message"/></p>
                         <a href="<spring:url value='/connexion'/>" class="btn btn-warning btn-lg">
                             <spring:message code="cart.guest.login"/>
                         </a>

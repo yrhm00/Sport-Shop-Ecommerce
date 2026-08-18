@@ -1,8 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="include/importTags.jsp" %>
 <div class="row align-items-center rounded-3 overflow-hidden shadow-lg mb-4 bg-white">
-    <div class="col-lg-7 p-0 overflow-hidden" style="max-height: 400px;">
-        <img src="<spring:url value='/images/home_hero.png'/>" class="w-100" style="object-fit: cover; height: 100%;" alt="Jogging Hero">
+    <div class="col-lg-7 p-0 overflow-hidden joggin-hero-image">
+        <img src="<spring:url value='/images/home_hero.png'/>" class="w-100 joggin-image-couvrante"
+             alt="<spring:message code='home.hero.alt'/>">
     </div>
     <div class="col-lg-5 p-4 p-lg-5">
         <h1 class="display-5 fw-bold lh-1 mb-3"><spring:message code="home.welcome.title"/></h1>
@@ -25,7 +26,9 @@
     </div>
     <div class="col-md-6 mb-4">
         <div class="h-100 border rounded-3 overflow-hidden position-relative text-white">
-            <img src="<spring:url value='/images/promo.png'/>" class="w-100 h-100 position-absolute top-0 start-0" style="object-fit: cover; filter: brightness(0.6);" alt="Promo">
+            <img src="<spring:url value='/images/promo.png'/>"
+                 class="w-100 h-100 position-absolute top-0 start-0 joggin-image-promo"
+                 alt="<spring:message code='home.promo.alt'/>">
             <div class="position-relative p-5 h-100 d-flex flex-column justify-content-center">
                 <h2 class="display-6 fw-bold"><spring:message code="home.promo.title"/></h2>
                 <p class="fs-5"><spring:message code="home.promo.text"/></p>
@@ -36,4 +39,3 @@
         </div>
     </div>
 </div>
-

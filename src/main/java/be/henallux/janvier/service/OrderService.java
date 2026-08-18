@@ -1,92 +1,124 @@
 package be.henallux.janvier.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import be.henallux.janvier.dataAccess.entity.OrderEntity;
-import be.henallux.janvier.dataAccess.entity.OrderLineEntity;
-import be.henallux.janvier.dataAccess.entity.UserEntity;
-import be.henallux.janvier.dataAccess.repository.OrderLineRepository;
-import be.henallux.janvier.dataAccess.repository.OrderRepository;
-import be.henallux.janvier.dataAccess.repository.UserRepository;
+import be.henallux.janvier.dataAccess.dao.OrderDataAccess;
+import be.henallux.janvier.dataAccess.dao.ProductDataAccess;
+import be.henallux.janvier.dataAccess.dao.UserDataAccess;
 import be.henallux.janvier.model.Cart;
 import be.henallux.janvier.model.CartItem;
+import be.henallux.janvier.model.Order;
+import be.henallux.janvier.model.OrderLine;
+import be.henallux.janvier.model.Product;
+import be.henallux.janvier.model.User;
 
 @Service
 public class OrderService {
 
-    private final OrderRepository orderRepository;
-    private final OrderLineRepository orderLineRepository;
-    private final UserRepository userRepository;
+    private final OrderDataAccess orderDAO;
+    private final UserDataAccess userDAO;
+    private final ProductDataAccess productDAO;
 
     @Autowired
-    public OrderService(OrderRepository orderRepository, OrderLineRepository orderLineRepository, UserRepository userRepository) {
-        this.orderRepository = orderRepository;
-        this.orderLineRepository = orderLineRepository;
-        this.userRepository = userRepository;
+    public OrderService(OrderDataAccess orderDAO, UserDataAccess userDAO, ProductDataAccess productDAO) {
+        this.orderDAO = orderDAO;
+        this.userDAO = userDAO;
+        this.productDAO = productDAO;
     }
 
+    /**
+     * Enregistre la commande AVANT le paiement, avec le statut EN_ATTENTE.
+     * Renvoie null si le panier est vide ou si l'utilisateur est introuvable.
+     */
     @Transactional
-    public Integer createOrder(Cart cart, String username, boolean isPaid) {
-        if (cart == null || cart.getItems().isEmpty()) {
+    public Order createOrder(Cart cart, String username) {
+        if (cart == null || cart.getItems().isEmpty() || username == null) {
             return null;
         }
 
-        // Récupérer l'utilisateur
-        UserEntity user = userRepository.findByUsername(username);
-        if (user == null) {
+        User user = userDAO.findByUsername(username);
+        if (user == null || user.getId() == null) {
             return null;
         }
 
-        // Créer la commande
-        OrderEntity order = new OrderEntity();
-        order.setDateCommande(LocalDateTime.now());
+        Order order = new Order();
         order.setUserId(user.getId());
-        order.setPaye(isPaid);
-
-        // Calculer le total (en prenant en compte la réduction du panier)
+        order.setDateCommande(LocalDateTime.now());
         order.setMontantTotal(cart.getTotalWithDiscount());
-        order = orderRepository.save(order);
+        order.setMontantReduction(cart.getDiscountAmount());
+        order.setPaye(false);
+        order.setStatut(Order.STATUT_EN_ATTENTE);
 
-        // Sauvegarder les lignes de commande
+        List<OrderLine> lignes = new ArrayList<>();
         for (CartItem item : cart.getItems()) {
-            OrderLineEntity line = new OrderLineEntity();
-            line.setOrder(order);
-            line.setOrderId(order.getId()); // Important : définir explicitement l'ID
-            line.setProductId(item.getProduct().getId());
-            line.setQuantite(item.getQuantite());
-
-            // Prix unitaire au moment de la commande
-            BigDecimal realPrice = item.getProduct().getPrix();
-            if (realPrice == null) {
-                realPrice = BigDecimal.ZERO;
+            Product product = item.getProduct();
+            if (product == null || product.getId() == null) {
+                continue;
             }
-            line.setPrixUnitaire(realPrice);
-
-            orderLineRepository.save(line);
+            lignes.add(new OrderLine(product.getId(), item.getTaille(), item.getQuantite(), product.getPrix()));
         }
 
-        return order.getId();
+        if (lignes.isEmpty()) {
+            return null;
+        }
+
+        return orderDAO.create(order, lignes);
     }
 
+    public Order getOrder(Integer orderId) {
+        return orderDAO.findById(orderId);
+    }
+
+    public List<Order> getOrdersOfUser(String username) {
+        User user = userDAO.findByUsername(username);
+        if (user == null) {
+            return new ArrayList<>();
+        }
+        return orderDAO.findByUserId(user.getId());
+    }
+
+    /** Verifie que la commande appartient bien a l'utilisateur passe en parametre. */
+    public boolean appartientA(Order order, String username) {
+        if (order == null || username == null) {
+            return false;
+        }
+        User user = userDAO.findByUsername(username);
+        return user != null && user.getId() != null && user.getId().equals(order.getUserId());
+    }
+
+    /**
+     * Marque la commande comme payee et retire les quantites commandees du stock.
+     */
     @Transactional
-    public void updateOrderPaymentStatus(Integer orderId, boolean isPaid) {
-        OrderEntity order = orderRepository.findById(orderId).orElse(null);
-        if (order != null) {
-            order.setPaye(isPaid);
-            orderRepository.save(order);
+    public void marquerPayee(Integer orderId) {
+        Order order = orderDAO.findById(orderId);
+        if (order == null || Order.STATUT_PAYEE.equals(order.getStatut())) {
+            return;
+        }
+
+        orderDAO.updateStatut(orderId, Order.STATUT_PAYEE, true);
+
+        for (OrderLine ligne : order.getLignes()) {
+            productDAO.decrementerStock(ligne.getProductId(), ligne.getTaille(), ligne.getQuantite());
         }
     }
 
+    /**
+     * Marque la commande comme annulee. La commande reste en base : la trace de
+     * l'enregistrement avant paiement est conservee.
+     */
     @Transactional
-    public void deleteOrder(Integer orderId) {
-        if (orderId != null && orderRepository.existsById(orderId)) {
-            orderLineRepository.deleteByOrderId(orderId);
-            orderRepository.deleteById(orderId);
+    public void annuler(Integer orderId) {
+        Order order = orderDAO.findById(orderId);
+        if (order == null || !order.isEnAttente()) {
+            return;
         }
+        orderDAO.updateStatut(orderId, Order.STATUT_ANNULEE, false);
     }
 }

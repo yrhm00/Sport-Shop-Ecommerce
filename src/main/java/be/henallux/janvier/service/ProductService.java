@@ -1,86 +1,84 @@
 package be.henallux.janvier.service;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import be.henallux.janvier.dataAccess.dao.ProductDataAccess;
 import be.henallux.janvier.model.Product;
+import be.henallux.janvier.model.Promotion;
 
 @Service
 public class ProductService {
 
+    /** Nombre de produits affiches dans la rubrique "Nouveautes". */
+    private static final int NOMBRE_NOUVEAUTES = 4;
+
     private final ProductDataAccess productDAO;
+    private final PromotionService promotionService;
 
     @Autowired
-    public ProductService(ProductDataAccess productDAO) {
+    public ProductService(ProductDataAccess productDAO, PromotionService promotionService) {
         this.productDAO = productDAO;
+        this.promotionService = promotionService;
     }
 
-    public List<Product> getAllProducts() {
-        List<Product> products = productDAO.findAll();
-        java.util.Set<Integer> newProductIds = getNewProductIds();
-        products.forEach(p -> applyPromotionsAndMarkNew(p, newProductIds));
-        return products;
+    public List<Product> getAllProducts(String langue) {
+        return enrichir(productDAO.findAll(langue), langue);
     }
 
-    public List<Product> getProductsByCategory(Integer categoryId) {
-        List<Product> products = productDAO.findByCategoryId(categoryId);
-        java.util.Set<Integer> newProductIds = getNewProductIds();
-        products.forEach(p -> applyPromotionsAndMarkNew(p, newProductIds));
-        return products;
+    public List<Product> getProductsByCategory(Integer categoryId, String langue) {
+        return enrichir(productDAO.findByCategoryId(categoryId, langue), langue);
     }
 
-    public Product getProductById(Integer id) {
-        Product product = productDAO.findById(id);
-        if (product != null) {
-            java.util.Set<Integer> newProductIds = getNewProductIds();
-            applyPromotionsAndMarkNew(product, newProductIds);
+    public Product getProductById(Integer id, String langue) {
+        Product product = productDAO.findById(id, langue);
+        if (product == null) {
+            return null;
         }
+        promotionService.appliquerPromotions(product);
+        product.setNewArrival(getIdsNouveautes(langue).contains(product.getId()));
         return product;
     }
 
-    public List<Product> getNewArrivals() {
-        List<Product> products = productDAO.findNewArrivals();
-        java.util.Set<Integer> newProductIds = getNewProductIds();
-        products.forEach(p -> applyPromotionsAndMarkNew(p, newProductIds));
-        return products;
+    public List<Product> getNewArrivals(String langue) {
+        return enrichir(productDAO.findNouveautes(langue, NOMBRE_NOUVEAUTES), langue);
     }
 
-    public List<Product> getPromotions() {
-        List<Product> products = productDAO.findPromotions();
-        java.util.Set<Integer> newProductIds = getNewProductIds();
-        products.forEach(p -> applyPromotionsAndMarkNew(p, newProductIds));
-        return products;
-    }
-
-
-    /**
-     * Récupère les IDs des produits considérés comme "nouveaux"
-     */
-    private java.util.Set<Integer> getNewProductIds() {
-        List<Product> newArrivals = productDAO.findNewArrivals();
-        return newArrivals.stream()
-            .map(Product::getId)
-            .collect(java.util.stream.Collectors.toSet());
+    /** Produits couverts par une promotion active (la liste vient de la base). */
+    public List<Product> getPromotions(String langue) {
+        return enrichir(productDAO.findEnPromotion(langue, LocalDateTime.now()), langue);
     }
 
     /**
-     * Applique les promotions et marque les produits nouveaux
+     * Applique les promotions et marque les nouveautes sur une liste de produits.
+     * Les promotions et la liste des nouveautes ne sont chargees qu'une seule fois.
      */
-    private void applyPromotionsAndMarkNew(Product product, java.util.Set<Integer> newProductIds) {
-        // Marquer comme nouveau si dans la liste des nouveautés
-        if (newProductIds.contains(product.getId())) {
-            product.setNewArrival(true);
+    private List<Product> enrichir(List<Product> products, String langue) {
+        if (products == null || products.isEmpty()) {
+            return products;
         }
-        
-        // Appliquer les promotions
-        if (product.getPrix() != null && product.getPrix().doubleValue() > 100.0) {
-            product.setOriginalPrice(product.getPrix());
-            double newPrice = product.getPrix().doubleValue() * 0.9;
-            newPrice = Math.round(newPrice * 100.0) / 100.0;
-            product.setPrix(java.math.BigDecimal.valueOf(newPrice));
+
+        List<Promotion> promotionsActives = promotionService.getPromotionsActives();
+        Set<Integer> idsNouveautes = getIdsNouveautes(langue);
+
+        for (Product product : products) {
+            promotionService.appliquerPromotions(product, promotionsActives);
+            product.setNewArrival(idsNouveautes.contains(product.getId()));
         }
+        return products;
+    }
+
+    private Set<Integer> getIdsNouveautes(String langue) {
+        List<Product> nouveautes = productDAO.findNouveautes(langue, NOMBRE_NOUVEAUTES);
+        if (nouveautes == null) {
+            return new HashSet<>();
+        }
+        return nouveautes.stream().map(Product::getId).collect(Collectors.toSet());
     }
 }
