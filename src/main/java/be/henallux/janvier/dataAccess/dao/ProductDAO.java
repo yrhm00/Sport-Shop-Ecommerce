@@ -5,10 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import be.henallux.janvier.dataAccess.entity.ProductEntity;
+import be.henallux.janvier.dataAccess.entity.ProductSizeEntity;
 import be.henallux.janvier.dataAccess.projection.TranslatedProduct;
 import be.henallux.janvier.dataAccess.repository.ProductRepository;
 import be.henallux.janvier.dataAccess.repository.ProductSizeRepository;
@@ -16,7 +17,7 @@ import be.henallux.janvier.dataAccess.util.ProviderConverter;
 import be.henallux.janvier.model.Product;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class ProductDAO implements ProductDataAccess {
 
     private final ProductRepository repository;
@@ -54,7 +55,13 @@ public class ProductDAO implements ProductDataAccess {
 
     @Override
     public List<Product> findNouveautes(String langue, int limite) {
-        return convertir(repository.findNouveautesTraduit(langue, PageRequest.of(0, limite)));
+        // La requete renvoie les produits du plus recent au plus ancien :
+        // on ne conserve que les premiers.
+        List<Product> produits = convertir(repository.findNouveautesTraduit(langue));
+        if (produits.size() > limite) {
+            return new ArrayList<>(produits.subList(0, limite));
+        }
+        return produits;
     }
 
     @Override
@@ -62,21 +69,40 @@ public class ProductDAO implements ProductDataAccess {
         return convertir(repository.findEnPromotionTraduit(langue, maintenant));
     }
 
+    /**
+     * Retire la quantite commandee du stock.
+     *
+     * Les entites sont chargees puis modifiees : Hibernate ecrit la mise a jour
+     * a la fin de la transaction. Le stock n'est jamais rendu negatif.
+     */
     @Override
-    @Transactional
     public boolean decrementerStock(Integer productId, String taille, Integer quantite) {
         if (productId == null || quantite == null || quantite <= 0) {
             return false;
         }
 
+        ProductEntity produit = repository.findById(productId).orElse(null);
+        if (produit == null || produit.getStock() == null || produit.getStock() < quantite) {
+            return false;
+        }
+
         // Si le produit se decline en tailles, c'est le stock de la taille qui fait foi.
+        ProductSizeEntity variante = null;
         if (taille != null && !taille.isBlank()) {
-            if (sizeRepository.decrementerStock(productId, taille, quantite) == 0) {
+            variante = sizeRepository.findByProductIdAndTaille(productId, taille);
+            if (variante != null && variante.getStock() < quantite) {
                 return false;
             }
         }
 
-        return repository.decrementerStock(productId, quantite) > 0;
+        if (variante != null) {
+            variante.setStock(variante.getStock() - quantite);
+            sizeRepository.save(variante);
+        }
+
+        produit.setStock(produit.getStock() - quantite);
+        repository.save(produit);
+        return true;
     }
 
     private List<Product> convertir(List<TranslatedProduct> translatedProducts) {

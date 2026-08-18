@@ -175,9 +175,9 @@ Tu peux évidemment aussi créer un compte via le formulaire d'inscription
 mvn test
 ```
 
-51 tests : services (promotions, commandes, inscription, produits, nettoyage XSS),
-panier, et jointure de traduction sur base H2 en mémoire.
-Aucune base PostgreSQL n'est nécessaire pour les tests.
+49 tests (JUnit + Mockito) : services (promotions, commandes, inscription, produits,
+nettoyage XSS), panier, règles de promotion et retrait de stock.
+Aucune base de données n'est nécessaire pour les tests.
 
 ---
 

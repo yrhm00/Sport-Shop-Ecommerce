@@ -13,7 +13,7 @@ import be.henallux.janvier.dataAccess.util.ProviderConverter;
 import be.henallux.janvier.model.Category;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class CategoryDAO implements CategoryDataAccess {
 
     private final CategoryRepository repository;

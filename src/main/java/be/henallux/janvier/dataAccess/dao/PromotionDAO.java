@@ -14,7 +14,7 @@ import be.henallux.janvier.dataAccess.util.ProviderConverter;
 import be.henallux.janvier.model.Promotion;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class PromotionDAO implements PromotionDataAccess {
 
     private final PromotionRepository repository;

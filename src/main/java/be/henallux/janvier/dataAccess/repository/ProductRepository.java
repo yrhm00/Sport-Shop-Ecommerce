@@ -3,9 +3,7 @@ package be.henallux.janvier.dataAccess.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,8 +45,9 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Integer>
     @Query(SELECT_TRADUIT + "where p.id = :id")
     TranslatedProduct findByIdTraduit(@Param("id") Integer id, @Param("locale") String locale);
 
+    /** Produits du plus recent au plus ancien (le DAO ne garde que les premiers). */
     @Query(SELECT_TRADUIT + "order by p.createdAt desc, p.id desc")
-    List<TranslatedProduct> findNouveautesTraduit(@Param("locale") String locale, Pageable pageable);
+    List<TranslatedProduct> findNouveautesTraduit(@Param("locale") String locale);
 
     /**
      * Produits couverts par une promotion active : soit une promotion ciblant
@@ -66,12 +65,4 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Integer>
     List<TranslatedProduct> findEnPromotionTraduit(@Param("locale") String locale,
                                                    @Param("maintenant") LocalDateTime maintenant);
 
-    /**
-     * Decremente le stock global d'un produit, sans jamais passer sous zero.
-     * Le WHERE garantit qu'une commande concurrente ne peut pas rendre le stock negatif.
-     */
-    @Modifying
-    @Query("update ProductEntity p set p.stock = p.stock - :quantite "
-         + "where p.id = :productId and p.stock >= :quantite")
-    int decrementerStock(@Param("productId") Integer productId, @Param("quantite") Integer quantite);
 }

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import be.henallux.janvier.model.Cart;
 import be.henallux.janvier.model.Product;
@@ -56,30 +55,25 @@ public class PanierController {
                             @RequestParam(defaultValue = "1") Integer quantite,
                             @RequestParam(required = false) String taille,
                             HttpSession session,
-                            Locale locale,
-                            RedirectAttributes redirectAttributes) {
+                            Locale locale) {
 
         Product product = productService.getProductById(productId, locale.getLanguage());
         if (product == null) {
-            redirectAttributes.addFlashAttribute("cartError", "error.product.notFound");
-            return "redirect:/produits";
+            return "redirect:/produits?erreur=produit";
         }
 
         if (quantite == null || quantite <= 0) {
-            redirectAttributes.addFlashAttribute("cartError", "error.cart.quantity");
-            return "redirect:/produits/" + productId;
+            return "redirect:/produits/" + productId + "?erreur=quantite";
         }
 
         if (!stockSuffisant(product, taille, quantite)) {
-            redirectAttributes.addFlashAttribute("cartError", "error.cart.stock");
-            return "redirect:/produits/" + productId;
+            return "redirect:/produits/" + productId + "?erreur=stock";
         }
 
         Cart cart = getCart(session);
         cart.addItem(product, quantite, taille);
         session.setAttribute(CART_SESSION_KEY, cart);
-        redirectAttributes.addFlashAttribute("cartSuccess", "cart.added");
-        return "redirect:/panier";
+        return "redirect:/panier?ajoute";
     }
 
     /** Modifie la quantite d'un article du panier. */
@@ -88,23 +82,19 @@ public class PanierController {
                                  @RequestParam Integer quantite,
                                  @RequestParam(required = false) String taille,
                                  HttpSession session,
-                                 Locale locale,
-                                 RedirectAttributes redirectAttributes) {
+                                 Locale locale) {
 
         if (quantite == null || quantite <= 0) {
-            redirectAttributes.addFlashAttribute("cartError", "error.cart.quantity");
-            return "redirect:/panier";
+            return "redirect:/panier?erreur=quantite";
         }
 
         Product product = productService.getProductById(productId, locale.getLanguage());
         if (product == null) {
-            redirectAttributes.addFlashAttribute("cartError", "error.product.notFound");
-            return "redirect:/panier";
+            return "redirect:/panier?erreur=produit";
         }
 
         if (!stockSuffisant(product, taille, quantite)) {
-            redirectAttributes.addFlashAttribute("cartError", "error.cart.stock");
-            return "redirect:/panier";
+            return "redirect:/panier?erreur=stock";
         }
 
         Cart cart = getCart(session);

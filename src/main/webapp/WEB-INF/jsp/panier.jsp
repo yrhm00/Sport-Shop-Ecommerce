@@ -3,11 +3,17 @@
 <div class="container mt-4">
     <h1><spring:message code="cart.title"/></h1>
 
-    <c:if test="${not empty cartError}">
-        <div class="alert alert-danger"><spring:message code="${cartError}"/></div>
+    <c:if test="${param.erreur == 'stock'}">
+        <div class="alert alert-danger"><spring:message code="error.cart.stock"/></div>
     </c:if>
-    <c:if test="${not empty cartSuccess}">
-        <div class="alert alert-success"><spring:message code="${cartSuccess}"/></div>
+    <c:if test="${param.erreur == 'quantite'}">
+        <div class="alert alert-danger"><spring:message code="error.cart.quantity"/></div>
+    </c:if>
+    <c:if test="${param.erreur == 'produit'}">
+        <div class="alert alert-danger"><spring:message code="error.product.notFound"/></div>
+    </c:if>
+    <c:if test="${param.ajoute != null}">
+        <div class="alert alert-success"><spring:message code="cart.added"/></div>
     </c:if>
 
     <c:choose>

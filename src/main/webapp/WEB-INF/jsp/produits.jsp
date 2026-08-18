@@ -4,6 +4,10 @@
   <h1><spring:message code="catalog.title"/></h1>
   <p class="lead"><spring:message code="catalog.subtitle"/></p>
 
+  <c:if test="${param.erreur == 'produit'}">
+    <div class="alert alert-danger"><spring:message code="error.product.notFound"/></div>
+  </c:if>
+
   <div class="row">
     <c:forEach items="${categories}" var="category">
       <div class="col-md-4 mb-3">

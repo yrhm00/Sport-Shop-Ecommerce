@@ -3,8 +3,8 @@
 <div class="container py-5">
     <h1><spring:message code="orders.title"/></h1>
 
-    <c:if test="${not empty infoMessage}">
-        <div class="alert alert-info"><spring:message code="${infoMessage}"/></div>
+    <c:if test="${param.annulee != null}">
+        <div class="alert alert-info"><spring:message code="order.cancelled.confirmation"/></div>
     </c:if>
 
     <c:choose>

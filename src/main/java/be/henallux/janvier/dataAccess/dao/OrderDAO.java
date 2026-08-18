@@ -16,7 +16,7 @@ import be.henallux.janvier.model.Order;
 import be.henallux.janvier.model.OrderLine;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class OrderDAO implements OrderDataAccess {
 
     private final OrderRepository orderRepository;
@@ -32,7 +32,6 @@ public class OrderDAO implements OrderDataAccess {
     }
 
     @Override
-    @Transactional
     public Order create(Order order, List<OrderLine> lignes) {
         if (order == null || lignes == null || lignes.isEmpty()) {
             return null;
@@ -100,7 +99,6 @@ public class OrderDAO implements OrderDataAccess {
     }
 
     @Override
-    @Transactional
     public void updateStatut(Integer orderId, String statut, boolean paye) {
         if (orderId == null) {
             return;

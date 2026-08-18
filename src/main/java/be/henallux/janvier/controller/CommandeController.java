@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import be.henallux.janvier.model.Cart;
 import be.henallux.janvier.model.Order;
@@ -94,8 +93,7 @@ public class CommandeController {
     /** Relance du paiement d'une commande restee en attente. */
     @PostMapping("/{orderId}/payer")
     public String payerCommandeEnAttente(@PathVariable Integer orderId, Principal principal,
-                                         HttpServletRequest request, HttpSession session,
-                                         RedirectAttributes redirectAttributes) {
+                                         HttpServletRequest request, HttpSession session) {
         Order order = orderService.getOrder(orderId);
         if (!orderService.appartientA(order, principal.getName()) || !order.isEnAttente()) {
             return "redirect:/commandes/mes-commandes";
@@ -104,20 +102,18 @@ public class CommandeController {
         session.setAttribute(PENDING_ORDER_KEY, order.getId());
         String lienPaiement = demanderPaiement(order, request);
         if (lienPaiement == null) {
-            redirectAttributes.addAttribute("error", "payment_init");
-            return "redirect:/commandes/" + orderId + "/attente";
+            return "redirect:/commandes/" + orderId + "/attente?error=payment_init";
         }
         return "redirect:" + lienPaiement;
     }
 
     /** Annulation explicite par le client : la commande reste en base, statut ANNULEE. */
     @PostMapping("/{orderId}/annuler")
-    public String annulerCommande(@PathVariable Integer orderId, Principal principal,
-                                  RedirectAttributes redirectAttributes) {
+    public String annulerCommande(@PathVariable Integer orderId, Principal principal) {
         Order order = orderService.getOrder(orderId);
         if (orderService.appartientA(order, principal.getName())) {
             orderService.annuler(orderId);
-            redirectAttributes.addFlashAttribute("infoMessage", "order.cancelled.confirmation");
+            return "redirect:/commandes/mes-commandes?annulee";
         }
         return "redirect:/commandes/mes-commandes";
     }

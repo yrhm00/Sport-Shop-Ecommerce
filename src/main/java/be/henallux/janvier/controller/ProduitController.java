@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import be.henallux.janvier.exception.RessourceIntrouvableException;
 import be.henallux.janvier.model.Category;
 import be.henallux.janvier.model.Product;
 import be.henallux.janvier.service.CategoryService;
@@ -44,8 +43,12 @@ public class ProduitController {
     @GetMapping("/categorie/{categoryId}")
     public String showProductsByCategory(@PathVariable Integer categoryId, Model model, Locale locale) {
         Category category = categoryService.getCategoryById(categoryId, locale.getLanguage());
+
+        // La categorie demandee dans l'URL peut ne pas exister : on affiche une
+        // page d'erreur traduite plutot que de laisser passer une valeur nulle.
         if (category == null) {
-            throw new RessourceIntrouvableException("error.category.notFound");
+            model.addAttribute("cleErreur", "error.category.notFound");
+            return "erreur";
         }
 
         model.addAttribute("category", category);
@@ -57,8 +60,10 @@ public class ProduitController {
     @GetMapping("/{productId}")
     public String showProductDetails(@PathVariable Integer productId, Model model, Locale locale) {
         Product product = productService.getProductById(productId, locale.getLanguage());
+
         if (product == null) {
-            throw new RessourceIntrouvableException("error.product.notFound");
+            model.addAttribute("cleErreur", "error.product.notFound");
+            return "erreur";
         }
 
         model.addAttribute("product", product);
