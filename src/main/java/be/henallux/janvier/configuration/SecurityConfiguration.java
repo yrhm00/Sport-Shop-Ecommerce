@@ -14,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -70,17 +69,14 @@ public class SecurityConfiguration {
                 .permitAll()
             .and()
             .logout()
-                // Deconnexion en POST uniquement : une simple visite d'URL ne
-                // doit pas pouvoir deconnecter l'utilisateur.
-                .logoutRequestMatcher(new AntPathRequestMatcher("/deconnexion", "POST"))
+                // Avec la protection CSRF active, Spring Security n'accepte la
+                // deconnexion qu'en POST : une simple visite d'URL ne deconnecte pas.
+                .logoutUrl("/deconnexion")
                 .logoutSuccessUrl("/?logout")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .permitAll()
-            .and()
-            .sessionManagement()
-                // Nouvel identifiant de session a la connexion (fixation de session).
-                .sessionFixation().migrateSession();
+            ;
 
         // En-tetes de securite HTTP.
         http
@@ -92,11 +88,7 @@ public class SecurityConfiguration {
                                         + "img-src 'self' data:; "
                                         + "form-action 'self'; "
                                         + "base-uri 'self'; "
-                                        + "frame-ancestors 'none'"))
-                // HSTS : le navigateur n'utilisera plus que HTTPS pour ce site.
-                .httpStrictTransportSecurity(hsts -> hsts
-                        .includeSubDomains(true)
-                        .maxAgeInSeconds(31536000));
+                                        + "frame-ancestors 'none'"));
 
         return http.build();
     }
