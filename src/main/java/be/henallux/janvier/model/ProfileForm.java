@@ -16,33 +16,33 @@ public class ProfileForm {
 
     private String username;
 
-    @NotBlank(message = "{NotNull.inscriptionForm.nom}")
-    @Size(min = 2, max = 100, message = "{Size.inscriptionForm.nom}")
+    @NotBlank
+    @Size(min = 2, max = 100)
     private String nom;
 
-    @NotBlank(message = "{NotNull.inscriptionForm.prenom}")
-    @Size(min = 2, max = 100, message = "{Size.inscriptionForm.prenom}")
+    @NotBlank
+    @Size(min = 2, max = 100)
     private String prenom;
 
-    @NotBlank(message = "{NotNull.inscriptionForm.email}")
-    @Email(message = "{Email.inscriptionForm.email}")
-    @Size(max = 150, message = "{Size.inscriptionForm.email}")
+    @NotBlank
+    @Email
+    @Size(max = 150)
     private String email;
 
-    @Pattern(regexp = "^$|^[0-9+ ]{9,20}$", message = "{Pattern.inscriptionForm.telephone}")
+    @Pattern(regexp = "^$|^[0-9+ ]{9,20}$")
     private String telephone;
 
-    @NotBlank(message = "{NotNull.inscriptionForm.adresse}")
-    @Size(min = 10, max = 500, message = "{Size.inscriptionForm.adresse}")
+    @NotBlank
+    @Size(min = 10, max = 500)
     private String adresse;
 
-    @NotBlank(message = "{NotNull.inscriptionForm.codePostal}")
-    @Size(min = 4, max = 10, message = "{Size.inscriptionForm.codePostal}")
-    @Pattern(regexp = "^[0-9]*$", message = "{Pattern.inscriptionForm.codePostal}")
+    @NotBlank
+    @Size(min = 4, max = 10)
+    @Pattern(regexp = "^[0-9]*$")
     private String codePostal;
 
-    @NotBlank(message = "{NotNull.inscriptionForm.localite}")
-    @Size(min = 2, max = 100, message = "{Size.inscriptionForm.localite}")
+    @NotBlank
+    @Size(min = 2, max = 100)
     private String localite;
 
     public ProfileForm() {
