@@ -15,16 +15,7 @@
 </div>
 
 <div class="row align-items-md-stretch">
-    <div class="col-md-6 mb-4">
-        <div class="h-100 p-5 text-white bg-dark rounded-3 d-flex flex-column justify-content-center">
-            <h2><spring:message code="home.news.title"/></h2>
-            <p><spring:message code="home.news.text"/></p>
-            <div class="mt-auto">
-                <a href="<spring:url value='/produits/nouveautes'/>" class="btn btn-outline-light"><spring:message code="home.news.btn"/></a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
+    <div class="col-12 mb-4">
         <div class="h-100 border rounded-3 overflow-hidden position-relative text-white">
             <img src="<spring:url value='/images/promo.png'/>"
                  class="w-100 h-100 position-absolute top-0 start-0 joggin-image-promo"

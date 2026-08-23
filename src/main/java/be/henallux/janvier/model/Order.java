@@ -24,6 +24,7 @@ public class Order {
     private BigDecimal montantReduction = BigDecimal.ZERO;
     private boolean paye;
     private String statut = STATUT_EN_ATTENTE;
+    private String paypalOrderId;
     private List<OrderLine> lignes = new ArrayList<>();
 
     public Order() {
@@ -87,6 +88,14 @@ public class Order {
 
     public void setStatut(String statut) {
         this.statut = statut;
+    }
+
+    public String getPaypalOrderId() {
+        return paypalOrderId;
+    }
+
+    public void setPaypalOrderId(String paypalOrderId) {
+        this.paypalOrderId = paypalOrderId;
     }
 
     public List<OrderLine> getLignes() {

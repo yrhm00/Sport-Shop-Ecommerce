@@ -13,8 +13,6 @@ import be.henallux.janvier.dataAccess.projection.TranslatedCategory;
 @Repository
 public interface CategoryRepository extends JpaRepository<CategoryEntity, Integer> {
 
-    CategoryEntity findByCode(String code);
-
     /**
      * Meme principe que ProductRepository : le nom traduit est ramene par
      * JOINTURE avec la table unique 'translations', filtree sur la langue.
@@ -32,6 +30,4 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, Intege
     @Query(SELECT_TRADUIT + "where c.id = :id")
     TranslatedCategory findByIdTraduit(@Param("id") Integer id, @Param("locale") String locale);
 
-    @Query(SELECT_TRADUIT + "where c.code = :code")
-    TranslatedCategory findByCodeTraduit(@Param("code") String code, @Param("locale") String locale);
 }

@@ -6,7 +6,7 @@
 <tiles-definitions>
     <!-- Template de base -->
     <definition name="base.definition" template="/WEB-INF/jsp/template/template.jsp">
-        <put-attribute name="titre" value="Projet Janvier" />
+        <put-attribute name="titre" value="general.title" />
         <put-attribute name="entete" value="/WEB-INF/jsp/template/entete.jsp" />
         <put-attribute name="menu" value="/WEB-INF/jsp/template/menu.jsp" />
         <put-attribute name="contenu" value="" /> <!-- Sera surchargé -->
@@ -15,86 +15,85 @@
 
     <!-- Page d'accueil -->
     <definition name="accueil" extends="base.definition">
-        <put-attribute name="titre" value="Accueil - E-Shop" />
+        <put-attribute name="titre" value="home.welcome.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/accueil.jsp" />
     </definition>
 
     <!-- Page Panier -->
     <definition name="panier" extends="base.definition">
-        <put-attribute name="titre" value="Mon Panier" />
+        <put-attribute name="titre" value="cart.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/panier.jsp" />
     </definition>
 
     <!-- Page Produits -->
     <definition name="produits" extends="base.definition">
-        <put-attribute name="titre" value="Catalogue des Produits" />
+        <put-attribute name="titre" value="catalog.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/produits.jsp" />
     </definition>
 
     <!-- Page Inscription -->
     <definition name="inscription" extends="base.definition">
-        <put-attribute name="titre" value="Inscription" />
+        <put-attribute name="titre" value="register.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/inscription.jsp" />
     </definition>
 
     <!-- Page Connexion -->
     <definition name="connexion" extends="base.definition">
-        <put-attribute name="titre" value="Connexion" />
+        <put-attribute name="titre" value="login.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/connexion.jsp" />
     </definition>
 
     <!-- Page Liste Produits d'une catégorie -->
     <definition name="produits-liste" extends="base.definition">
-        <put-attribute name="titre" value="Produits" />
+        <put-attribute name="titre" value="catalog.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/produits-liste.jsp" />
     </definition>
 
     <!-- Page Détails d'un produit -->
     <definition name="produit-detail" extends="base.definition">
-        <put-attribute name="titre" value="Détails du Produit" />
+        <put-attribute name="titre" value="product.details" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/produit-detail.jsp" />
     </definition>
     <!-- Page Checkout -->
     <definition name="checkout" extends="base.definition">
-        <put-attribute name="titre" value="Récapitulatif de la commande" />
+        <put-attribute name="titre" value="checkout.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/checkout.jsp" />
     </definition>
 
     <!-- Page Succès Commande -->
     <definition name="commande-succes" extends="base.definition">
-        <put-attribute name="titre" value="Commande Validée" />
+        <put-attribute name="titre" value="success.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/commande-succes.jsp" />
     </definition>
 
 
     <!-- Page À Propos -->
     <definition name="a-propos" extends="base.definition">
-        <put-attribute name="titre" value="À Propos" />
+        <put-attribute name="titre" value="about.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/a-propos.jsp" />
     </definition>
 
     <!-- Page Profil -->
     <definition name="profil" extends="base.definition">
-        <put-attribute name="titre" value="Mon Profil" />
+        <put-attribute name="titre" value="profile.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/profil.jsp" />
     </definition>
     <!-- Commande en attente de paiement -->
     <definition name="commande-attente" extends="base.definition">
-        <put-attribute name="titre" value="Commande en attente" />
+        <put-attribute name="titre" value="orders.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/commande-attente.jsp" />
     </definition>
 
     <!-- Historique des commandes -->
     <definition name="mes-commandes" extends="base.definition">
-        <put-attribute name="titre" value="Mes commandes" />
+        <put-attribute name="titre" value="orders.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/mes-commandes.jsp" />
     </definition>
 
     <!-- Page d'erreur (404 / 500) -->
     <definition name="erreur" extends="base.definition">
-        <put-attribute name="titre" value="Erreur" />
+        <put-attribute name="titre" value="error.title" />
         <put-attribute name="contenu" value="/WEB-INF/jsp/erreur.jsp" />
     </definition>
 
 </tiles-definitions>
-

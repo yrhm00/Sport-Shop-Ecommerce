@@ -157,6 +157,9 @@ public class ProviderConverter {
         if (translated.getDescriptionTraduite() != null) {
             model.setDescription(translated.getDescriptionTraduite());
         }
+        if (translated.getNomCategorieTraduit() != null) {
+            model.setCategoryNom(translated.getNomCategorieTraduit());
+        }
         return model;
     }
 
@@ -191,6 +194,7 @@ public class ProviderConverter {
         model.setMontantReduction(entity.getMontantReduction());
         model.setPaye(Boolean.TRUE.equals(entity.getPaye()));
         model.setStatut(entity.getStatut());
+        model.setPaypalOrderId(entity.getPaypalOrderId());
         return model;
     }
 

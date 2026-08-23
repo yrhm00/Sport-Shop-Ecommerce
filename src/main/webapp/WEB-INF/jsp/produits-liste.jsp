@@ -27,13 +27,7 @@
                 <div class="card h-100 shadow-sm border-0">
                     <c:if test="${product.enPromotion}">
                         <div class="position-absolute top-0 end-0 m-2">
-                            <%-- Le libelle vient de la table promotions --%>
-                            <span class="badge bg-danger fs-6"><c:out value="${product.promotionLibelle}"/></span>
-                        </div>
-                    </c:if>
-                    <c:if test="${product.newArrival}">
-                        <div class="position-absolute top-0 start-0 m-2">
-                            <span class="badge bg-success fs-6"><spring:message code="product.badge.new"/></span>
+                            <span class="badge bg-danger fs-6"><spring:message code="product.badge.promotion"/></span>
                         </div>
                     </c:if>
                     <div class="d-flex align-items-center justify-content-center bg-white p-3 rounded-top joggin-vignette-produit">

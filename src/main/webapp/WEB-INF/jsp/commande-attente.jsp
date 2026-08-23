@@ -15,6 +15,9 @@
     <c:if test="${erreurPaiement == 'payment_init'}">
         <div class="alert alert-danger"><spring:message code="error.payment.init"/></div>
     </c:if>
+    <c:if test="${erreurPaiement == 'stock_unavailable'}">
+        <div class="alert alert-danger"><spring:message code="error.payment.stock"/></div>
+    </c:if>
 
     <div class="card shadow-sm">
         <div class="card-header bg-secondary text-white">

@@ -59,7 +59,6 @@ public class PromotionService {
 
         BigDecimal prixInitial = product.getPrix();
         BigDecimal meilleureReduction = BigDecimal.ZERO;
-        Promotion meilleurePromotion = null;
 
         for (Promotion promotion : promotionsActives) {
             if (!promotion.concerneProduit(product.getId(), product.getCategoryId())) {
@@ -68,17 +67,15 @@ public class PromotionService {
             BigDecimal reduction = promotion.reductionPour(prixInitial);
             if (reduction.compareTo(meilleureReduction) > 0) {
                 meilleureReduction = reduction;
-                meilleurePromotion = promotion;
             }
         }
 
-        if (meilleurePromotion == null || meilleureReduction.signum() <= 0) {
+        if (meilleureReduction.signum() <= 0) {
             return;
         }
 
         product.setOriginalPrice(prixInitial);
         product.setPrix(prixInitial.subtract(meilleureReduction).setScale(2, RoundingMode.HALF_UP));
-        product.setPromotionLibelle(meilleurePromotion.getLibelle());
     }
 
     /**

@@ -39,6 +39,10 @@ public class OrderEntity implements Serializable {
     @Column(name = "statut", nullable = false, length = 20)
     private String statut = STATUT_EN_ATTENTE;
 
+    /** Identifiant de la commande creee chez PayPal pour cette tentative de paiement. */
+    @Column(name = "paypal_order_id", length = 64, unique = true)
+    private String paypalOrderId;
+
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private UserEntity user;
@@ -106,6 +110,14 @@ public class OrderEntity implements Serializable {
         this.statut = statut;
     }
 
+    public String getPaypalOrderId() {
+        return paypalOrderId;
+    }
+
+    public void setPaypalOrderId(String paypalOrderId) {
+        this.paypalOrderId = paypalOrderId;
+    }
+
     public Boolean getPaye() {
         return paye;
     }
@@ -130,5 +142,3 @@ public class OrderEntity implements Serializable {
         this.orderLines = orderLines;
     }
 }
-
-

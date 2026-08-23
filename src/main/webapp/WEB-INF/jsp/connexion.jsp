@@ -3,8 +3,8 @@
 <div class="container-fluid h-100">
   <div class="row justify-content-center align-items-center h-100">
     <!-- Colonne Image -->
-    <div class="col-md-6 d-none d-md-block p-0 h-100" style="min-height: 80vh;">
-      <img src="<spring:url value='/images/auth_sidebar.png'/>" alt="Login Visual" class="w-100 h-100" style="object-fit: cover;">
+    <div class="col-md-6 d-none d-md-block p-0 h-100 joggin-colonne-illustration">
+      <img src="<spring:url value='/images/auth_sidebar.png'/>" alt="Login Visual" class="w-100 h-100 joggin-illustration">
     </div>
     
     <!-- Colonne Formulaire -->
@@ -18,21 +18,18 @@
         <!-- Messages -->
         <c:if test="${param.inscriptionSuccess != null}">
             <div class="alert alert-success d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>
                 <spring:message code="login.success.register"/>
             </div>
         </c:if>
 
         <c:if test="${param.logout != null}">
             <div class="alert alert-info d-flex align-items-center" role="alert">
-                 <i class="bi bi-info-circle-fill me-2"></i>
                  <spring:message code="login.success.logout"/>
             </div>
         </c:if>
 
         <c:if test="${param.error != null}">
             <div class="alert alert-danger d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-octagon-fill me-2"></i>
                 <spring:message code="login.error.badCredentials"/>
             </div>
         </c:if>

@@ -1,7 +1,6 @@
 package be.henallux.janvier.dataAccess.entity;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,7 +12,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 @Entity
@@ -49,9 +47,6 @@ public class UserEntity implements Serializable {
     @Column(name = "adresse", nullable = false, columnDefinition = "TEXT")
     private String adresse;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
     @Column(name = "code_postal", length = 10)
     private String codePostal;
 
@@ -65,13 +60,6 @@ public class UserEntity implements Serializable {
     public UserEntity() {
     }
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-    }
-
     public UserEntity(String username, String password, String nom, String prenom, String email, String adresse) {
         this.username = username;
         this.password = password;
@@ -80,7 +68,6 @@ public class UserEntity implements Serializable {
         this.email = email;
         this.adresse = adresse;
         this.enabled = true;
-        this.createdAt = LocalDateTime.now();
     }
 
     // Getters et Setters
@@ -156,14 +143,6 @@ public class UserEntity implements Serializable {
         this.adresse = adresse;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public String getCodePostal() {
         return codePostal;
     }
@@ -188,5 +167,4 @@ public class UserEntity implements Serializable {
         this.authorities = authorities;
     }
 }
-
 

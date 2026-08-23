@@ -5,7 +5,7 @@
         <span class="fs-4"><spring:message code="general.title"/></span>
     </a>
     <div class="ms-auto">
-        <%-- Le choix de la langue conserve la page courante et ses parametres. --%>
+        <%-- Le choix de la langue conserve la page courante. --%>
         <a href="?lang=fr" class="btn btn-sm btn-outline-primary" hreflang="fr">FR</a>
         <a href="?lang=en" class="btn btn-sm btn-outline-secondary" hreflang="en">EN</a>
     </div>

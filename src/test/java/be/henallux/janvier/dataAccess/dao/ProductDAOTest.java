@@ -50,7 +50,7 @@ class ProductDAOTest {
     @Test
     void leStockEstRetireQuandIlEstSuffisant() {
         ProductEntity entity = produit(10);
-        when(repository.findById(1)).thenReturn(Optional.of(entity));
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(entity));
 
         assertTrue(productDAO.decrementerStock(1, null, 3));
 
@@ -62,7 +62,8 @@ class ProductDAOTest {
     void leStockDeLaTailleEstRetireAussi() {
         ProductEntity entity = produit(10);
         ProductSizeEntity variante = new ProductSizeEntity(1, "42", 4);
-        when(repository.findById(1)).thenReturn(Optional.of(entity));
+        entity.getSizes().add(variante);
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(entity));
         when(sizeRepository.findByProductIdAndTaille(1, "42")).thenReturn(variante);
 
         assertTrue(productDAO.decrementerStock(1, "42", 2));
@@ -75,7 +76,7 @@ class ProductDAOTest {
     @Test
     void rienNEstModifieSiLeStockGlobalEstInsuffisant() {
         ProductEntity entity = produit(2);
-        when(repository.findById(1)).thenReturn(Optional.of(entity));
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(entity));
 
         assertFalse(productDAO.decrementerStock(1, null, 5));
 
@@ -87,7 +88,8 @@ class ProductDAOTest {
     void rienNEstModifieSiLeStockDeLaTailleEstInsuffisant() {
         ProductEntity entity = produit(50);
         ProductSizeEntity variante = new ProductSizeEntity(1, "42", 1);
-        when(repository.findById(1)).thenReturn(Optional.of(entity));
+        entity.getSizes().add(variante);
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(entity));
         when(sizeRepository.findByProductIdAndTaille(1, "42")).thenReturn(variante);
 
         assertFalse(productDAO.decrementerStock(1, "42", 3));
@@ -99,14 +101,52 @@ class ProductDAOTest {
     }
 
     @Test
+    void tailleInconnueOuAbsenteEstRefuseePourUnProduitAvecTailles() {
+        ProductEntity entity = produit(10);
+        entity.getSizes().add(new ProductSizeEntity(1, "42", 4));
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(entity));
+        when(sizeRepository.findByProductIdAndTaille(1, "99")).thenReturn(null);
+
+        assertFalse(productDAO.decrementerStock(1, "99", 1));
+        assertFalse(productDAO.decrementerStock(1, null, 1));
+
+        assertEquals(10, entity.getStock());
+        verify(repository, never()).save(any(ProductEntity.class));
+        verify(sizeRepository, never()).save(any(ProductSizeEntity.class));
+    }
+
+    @Test
+    void tailleInjecteeEstRefuseePourUnProduitSansTailles() {
+        ProductEntity entity = produit(10);
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(entity));
+
+        assertFalse(productDAO.decrementerStock(1, "TAILLE_INVALIDE", 1));
+
+        assertEquals(10, entity.getStock());
+        verify(repository, never()).save(any(ProductEntity.class));
+    }
+
+    @Test
     void produitInexistantOuQuantiteInvalide() {
-        when(repository.findById(99)).thenReturn(Optional.empty());
+        when(repository.findByIdForUpdate(99)).thenReturn(Optional.empty());
 
         assertFalse(productDAO.decrementerStock(99, null, 1));
         assertFalse(productDAO.decrementerStock(null, null, 1));
         assertFalse(productDAO.decrementerStock(1, null, 0));
         assertFalse(productDAO.decrementerStock(1, null, -5));
 
+        verify(repository, never()).save(any(ProductEntity.class));
+    }
+
+    @Test
+    void laVerificationDuStockNeLeModifiePas() {
+        ProductEntity entity = produit(10);
+        when(repository.findById(1)).thenReturn(Optional.of(entity));
+
+        assertTrue(productDAO.stockSuffisant(1, null, 4));
+        assertFalse(productDAO.stockSuffisant(1, null, 11));
+
+        assertEquals(10, entity.getStock());
         verify(repository, never()).save(any(ProductEntity.class));
     }
 }

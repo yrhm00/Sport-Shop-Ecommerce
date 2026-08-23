@@ -20,7 +20,7 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/janvier_db?useUnicode=true&characterEncoding=UTF-8}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/janvier_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -30,22 +30,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
     show-sql: false
   sql:
     init:
       mode: always
       encoding: UTF-8
-
-  messages:
-    encoding: UTF-8
-    basename: messages
-
-  mvc:
-    view:
-      prefix: /WEB-INF/jsp/
-      suffix: .jsp
-
 # Identifiants PayPal : jamais en clair dans le depot.
 # A definir dans l'environnement avant de lancer l'application (voir README.md).
 paypal:

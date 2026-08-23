@@ -14,11 +14,14 @@ public class TranslatedProduct {
     private final ProductEntity product;
     private final String nomTraduit;
     private final String descriptionTraduite;
+    private final String nomCategorieTraduit;
 
-    public TranslatedProduct(ProductEntity product, String nomTraduit, String descriptionTraduite) {
+    public TranslatedProduct(ProductEntity product, String nomTraduit, String descriptionTraduite,
+                             String nomCategorieTraduit) {
         this.product = product;
         this.nomTraduit = nomTraduit;
         this.descriptionTraduite = descriptionTraduite;
+        this.nomCategorieTraduit = nomCategorieTraduit;
     }
 
     public ProductEntity getProduct() {
@@ -31,5 +34,9 @@ public class TranslatedProduct {
 
     public String getDescriptionTraduite() {
         return descriptionTraduite;
+    }
+
+    public String getNomCategorieTraduit() {
+        return nomCategorieTraduit;
     }
 }

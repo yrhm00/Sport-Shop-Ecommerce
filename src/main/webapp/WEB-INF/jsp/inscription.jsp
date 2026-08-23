@@ -14,7 +14,7 @@
                     <!-- Erreur Globale -->
                     <c:if test="${not empty errorMessage}">
                         <div class="alert alert-danger d-flex align-items-center mb-4 text-center" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i> <spring:message code="${errorMessage}"/>
+                            <spring:message code="${errorMessage}"/>
                         </div>
                     </c:if>
 
@@ -109,7 +109,7 @@
                         </div>
 
                         <div class="col-12 mt-4 d-flex justify-content-between align-items-center">
-                            <a href="<spring:url value='/'/>" class="text-decoration-none text-secondary"><i class="bi bi-arrow-left"></i> <spring:message code="btn.cancel"/></a>
+                            <a href="<spring:url value='/'/>" class="text-decoration-none text-secondary"><spring:message code="btn.cancel"/></a>
                             <button type="submit" class="btn btn-primary btn-lg px-5"><spring:message code="btn.register"/></button>
                         </div>
                     </form:form>

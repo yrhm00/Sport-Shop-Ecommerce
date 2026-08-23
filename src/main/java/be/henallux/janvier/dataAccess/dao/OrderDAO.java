@@ -44,6 +44,7 @@ public class OrderDAO implements OrderDataAccess {
         entity.setMontantReduction(order.getMontantReduction());
         entity.setPaye(order.isPaye());
         entity.setStatut(order.getStatut());
+        entity.setPaypalOrderId(order.getPaypalOrderId());
         entity = orderRepository.save(entity);
 
         for (OrderLine ligne : lignes) {
@@ -68,6 +69,21 @@ public class OrderDAO implements OrderDataAccess {
         }
 
         Order order = orderRepository.findById(orderId).map(converter::orderEntityToModel).orElse(null);
+        if (order != null) {
+            order.setLignes(findLignes(orderId));
+        }
+        return order;
+    }
+
+    @Override
+    public Order findByIdForUpdate(Integer orderId) {
+        if (orderId == null) {
+            return null;
+        }
+
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .map(converter::orderEntityToModel)
+                .orElse(null);
         if (order != null) {
             order.setLignes(findLignes(orderId));
         }
@@ -106,6 +122,17 @@ public class OrderDAO implements OrderDataAccess {
         orderRepository.findById(orderId).ifPresent(entity -> {
             entity.setStatut(statut);
             entity.setPaye(paye);
+            orderRepository.save(entity);
+        });
+    }
+
+    @Override
+    public void updatePaypalOrderId(Integer orderId, String paypalOrderId) {
+        if (orderId == null || paypalOrderId == null || paypalOrderId.isBlank()) {
+            return;
+        }
+        orderRepository.findById(orderId).ifPresent(entity -> {
+            entity.setPaypalOrderId(paypalOrderId);
             orderRepository.save(entity);
         });
     }

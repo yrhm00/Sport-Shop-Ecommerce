@@ -99,7 +99,6 @@ class PromotionServiceTest {
 
         assertEquals(0, new BigDecimal("90.00").compareTo(product.getPrix()));
         assertEquals(0, new BigDecimal("100.00").compareTo(product.getOriginalPrice()));
-        assertEquals("Promotion de test", product.getPromotionLibelle());
     }
 
     @Test

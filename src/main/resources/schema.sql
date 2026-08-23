@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     telephone VARCHAR(20),
     adresse TEXT NOT NULL,
     code_postal VARCHAR(10),
-    localite VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    localite VARCHAR(100)
 );
 
 -- ============================================
@@ -55,7 +54,6 @@ CREATE TABLE IF NOT EXISTS products (
     prix DECIMAL(10,2) NOT NULL,
     stock INTEGER DEFAULT 0,
     image_url VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
@@ -138,8 +136,14 @@ CREATE TABLE IF NOT EXISTS orders (
     montant_reduction DECIMAL(10,2) NOT NULL DEFAULT 0,
     paye BOOLEAN DEFAULT FALSE,
     statut VARCHAR(20) NOT NULL DEFAULT 'EN_ATTENTE',
+    paypal_order_id VARCHAR(64),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Compatibilite avec une base creee avant l'ajout du rattachement PayPal.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS paypal_order_id VARCHAR(64);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_paypal_order_id
+    ON orders (paypal_order_id) WHERE paypal_order_id IS NOT NULL;
 
 -- ============================================
 -- TABLE: ORDER_LINES (Lignes de commande)
@@ -160,19 +164,15 @@ CREATE TABLE IF NOT EXISTS order_lines (
 -- ============================================
 
 -- USERS
--- Mot de passe des 3 comptes de demonstration : MotDePasse2026!
+-- Mot de passe des 2 comptes de demonstration : MotDePasse2026!
 -- (hash BCrypt genere avec BCryptPasswordEncoder, 60 caracteres)
 INSERT INTO users (username, password, enabled, nom, prenom, email, telephone, adresse, code_postal, localite) VALUES
-('admin', '$2a$10$54Pp1PwsxTTzKlYZQ826YOc0u1PKoW/3LSeBJK6JUHUVziB5wnC1u', TRUE, 'Admin', 'Super', 'admin@eshop.be', '0471234567', '1 Rue de la Paix', '5000', 'Namur'),
 ('user1', '$2a$10$Y1u5d7/RPZdz9GORqboke.2nUSpn32EhF2SzLIx/U8eSR5.t3LhhG', TRUE, 'Dupont', 'Jean', 'jean.dupont@email.be', '0472345678', '10 Avenue des Tilleuls', '4000', 'Liege'),
 ('user2', '$2a$10$Y1u5d7/RPZdz9GORqboke.2nUSpn32EhF2SzLIx/U8eSR5.t3LhhG', TRUE, 'Martin', 'Sophie', 'sophie.martin@email.be', '0473456789', '25 Rue du Commerce', '6000', 'Charleroi')
 ON CONFLICT (username) DO NOTHING;
--- Le compte 'admin' utilise le mot de passe : AdminEshop2026!
 
 -- AUTHORITIES
 INSERT INTO authorities (username, authority) VALUES
-('admin', 'ROLE_ADMIN'),
-('admin', 'ROLE_USER'),
 ('user1', 'ROLE_USER'),
 ('user2', 'ROLE_USER')
 ON CONFLICT (username, authority) DO NOTHING;
@@ -188,13 +188,13 @@ ON CONFLICT (code) DO NOTHING;
 -- PRODUCTS
 INSERT INTO products (category_id, code, nom, description, prix, stock, image_url) VALUES
 ((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-001', 'Nike Air Zoom Pegasus', 'Chaussure polyvalente pour tous types de courses', 129.99, 50, '/images/products/nike_pegasus.png'),
-((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-002', 'Adidas Ultraboost', 'Amorti maximal et retour d''energie optimal', 159.99, 30, '/images/products/adidas_ultraboost.png'),
-((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-003', 'Asics Gel-Kayano', 'Stabilite et confort pour longues distances', 149.99, 40, '/images/products/asics_gel_kayano.png'),
-((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-004', 'New Balance 880', 'Equilibre parfait entre amorti et reactivite', 119.99, 60, '/images/products/new_balance_880.png'),
-((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-001', 'T-shirt Running Nike Dri-FIT', 'Evacuation de la transpiration', 39.99, 100, '/images/products/nike_tshirt.png'),
+((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-002', 'Adidas Ultraboost', 'Amorti maximal et retour d''energie optimal', 159.99, 50, '/images/products/adidas_ultraboost.png'),
+((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-003', 'Asics Gel-Kayano', 'Stabilite et confort pour longues distances', 149.99, 50, '/images/products/asics_gel_kayano.png'),
+((SELECT id FROM categories WHERE code='CHAUSSURES'), 'SHOE-004', 'New Balance 880', 'Equilibre parfait entre amorti et reactivite', 119.99, 50, '/images/products/new_balance_880.png'),
+((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-001', 'T-shirt Running Nike Dri-FIT', 'Evacuation de la transpiration', 39.99, 80, '/images/products/nike_tshirt.png'),
 ((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-002', 'Short Adidas Own The Run', 'Leger et respirant', 34.99, 80, '/images/products/adidas_shorts.png'),
-((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-003', 'Veste coupe-vent Gore-Tex', 'Protection contre le vent et la pluie', 89.99, 35, '/images/products/gore_tex_jacket.png'),
-((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-004', 'Legging compression Under Armour', 'Support musculaire optimal', 49.99, 70, '/images/products/under_armour_legging.png'),
+((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-003', 'Veste coupe-vent Gore-Tex', 'Protection contre le vent et la pluie', 89.99, 80, '/images/products/gore_tex_jacket.png'),
+((SELECT id FROM categories WHERE code='VETEMENTS'), 'CLOTH-004', 'Legging compression Under Armour', 'Support musculaire optimal', 49.99, 80, '/images/products/under_armour_legging.png'),
 ((SELECT id FROM categories WHERE code='ACCESSOIRES'), 'ACC-001', 'Bouteille isotherme CamelBak', 'Garde l''eau fraiche pendant 24h', 24.99, 120, '/images/products/camelbak_bottle.png'),
 ((SELECT id FROM categories WHERE code='ACCESSOIRES'), 'ACC-002', 'Sac a dos running Salomon', 'Hydratation integree', 79.99, 45, '/images/products/salomon_backpack.png'),
 ((SELECT id FROM categories WHERE code='ACCESSOIRES'), 'ACC-003', 'Casquette Nike AeroBill', 'Protection solaire et legerete', 29.99, 90, '/images/products/nike_cap.png'),
@@ -300,6 +300,5 @@ INSERT INTO promotions (code, libelle, portee, type_reduction, valeur, seuil_min
 ('PROMO-MONTRES', 'Promotion sur les montres et trackers', 'CATEGORIE', 'POURCENTAGE', 15.00, NULL, NULL, (SELECT id FROM categories WHERE code='MONTRES'), NULL, NULL, TRUE),
 ('PROMO-ULTRABOOST', 'Offre speciale Adidas Ultraboost', 'PRODUIT', 'POURCENTAGE', 10.00, NULL, (SELECT id FROM products WHERE code='SHOE-002'), NULL, NULL, NULL, TRUE),
 ('PROMO-CAMELBAK', 'Bouteille CamelBak : 5 EUR de remise', 'PRODUIT', 'MONTANT', 5.00, NULL, (SELECT id FROM products WHERE code='ACC-001'), NULL, NULL, NULL, TRUE),
-('PROMO-PANIER-100', 'Remise de 10% des 100 EUR d''achat', 'PANIER', 'POURCENTAGE', 10.00, 100.00, NULL, NULL, NULL, NULL, TRUE),
-('PROMO-EXPIREE', 'Promotion de Noel (exemple de promo inactive)', 'PANIER', 'POURCENTAGE', 20.00, 50.00, NULL, NULL, '2025-12-01 00:00:00', '2025-12-31 23:59:59', FALSE)
+('PROMO-PANIER-100', 'Remise de 10% des 100 EUR d''achat', 'PANIER', 'POURCENTAGE', 10.00, 100.00, NULL, NULL, NULL, NULL, TRUE)
 ON CONFLICT (code) DO NOTHING;

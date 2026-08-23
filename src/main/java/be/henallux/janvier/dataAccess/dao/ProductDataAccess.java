@@ -7,15 +7,14 @@ import be.henallux.janvier.model.Product;
 
 public interface ProductDataAccess {
 
-    List<Product> findAll(String langue);
-
     Product findById(Integer id, String langue);
 
     List<Product> findByCategoryId(Integer categoryId, String langue);
 
-    List<Product> findNouveautes(String langue, int limite);
-
     List<Product> findEnPromotion(String langue, LocalDateTime maintenant);
+
+    /** Verifie le stock courant sans le modifier. */
+    boolean stockSuffisant(Integer productId, String taille, Integer quantite);
 
     /**
      * Retire la quantite du stock (stock global et stock de la taille si fournie).

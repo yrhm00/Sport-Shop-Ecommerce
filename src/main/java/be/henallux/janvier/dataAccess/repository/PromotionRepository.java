@@ -12,9 +12,6 @@ import be.henallux.janvier.dataAccess.entity.PromotionEntity;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<PromotionEntity, Integer> {
-
-    PromotionEntity findByCode(String code);
-
     /**
      * Promotions actives a l'instant donne : le drapeau 'active' est vrai et la
      * date du jour est comprise dans la periode de validite (bornes facultatives).

@@ -55,7 +55,9 @@ public class InscriptionService {
         // Créer l'utilisateur
         // Les champs libres sont nettoyes de tout balisage HTML avant enregistrement.
         User user = new User();
-        user.setUsername(sanitizationService.nettoyer(form.getUsername()));
+        // Le username a deja ete controle et refuse en cas de modification par
+        // le sanitizer dans InscriptionController, comme demande au laboratoire.
+        user.setUsername(form.getUsername());
         user.setPassword(passwordEncoder.encode(form.getPassword()));
         user.setNom(sanitizationService.nettoyer(form.getNom()));
         user.setPrenom(sanitizationService.nettoyer(form.getPrenom()));
@@ -75,5 +77,4 @@ public class InscriptionService {
         return userDAO.save(user);
     }
 }
-
 

@@ -13,6 +13,4 @@ public interface CategoryDataAccess {
     List<Category> findAll(String langue);
 
     Category findById(Integer id, String langue);
-
-    Category findByCode(String code, String langue);
 }

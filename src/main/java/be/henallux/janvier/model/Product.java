@@ -17,9 +17,6 @@ public class Product {
     private String imageUrl;
     private String categoryNom; // Pour l'affichage
     private Map<String, Integer> sizesStock = new HashMap<>(); // Taille -> Stock
-    private boolean isNewArrival = false; // Indique si le produit est nouveau
-    private String promotionLibelle; // Libelle de la promotion appliquee (issu de la table promotions)
-    private java.time.LocalDateTime createdAt; // Date de création du produit
 
     // Constructeurs
     public Product() {
@@ -123,34 +120,10 @@ public class Product {
         this.originalPrice = originalPrice;
     }
 
-    public String getPromotionLibelle() {
-        return promotionLibelle;
-    }
-
-    public void setPromotionLibelle(String promotionLibelle) {
-        this.promotionLibelle = promotionLibelle;
-    }
-
     /** Vrai si une promotion a fait baisser le prix de ce produit. */
     public boolean isEnPromotion() {
         return originalPrice != null && prix != null && originalPrice.compareTo(prix) > 0;
     }
 
-    public boolean isNewArrival() {
-        return isNewArrival;
-    }
-
-    public void setNewArrival(boolean isNewArrival) {
-        this.isNewArrival = isNewArrival;
-    }
-
-    public java.time.LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(java.time.LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }
-
 

@@ -42,11 +42,4 @@ public class CategoryDAO implements CategoryDataAccess {
         return converter.translatedCategoryToModel(repository.findByIdTraduit(id, langue));
     }
 
-    @Override
-    public Category findByCode(String code, String langue) {
-        if (code == null) {
-            return null;
-        }
-        return converter.translatedCategoryToModel(repository.findByCodeTraduit(code, langue));
-    }
 }

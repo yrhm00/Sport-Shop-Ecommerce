@@ -66,11 +66,19 @@ public class PanierController {
             return "redirect:/produits/" + productId + "?erreur=quantite";
         }
 
-        if (!stockSuffisant(product, taille, quantite)) {
+        if (!tailleValide(product, taille)) {
+            return "redirect:/produits/" + productId + "?erreur=taille";
+        }
+
+        Cart cartExistant = (Cart) session.getAttribute(CART_SESSION_KEY);
+        int quantiteExistante = cartExistant == null ? 0 : cartExistant.getQuantity(productId, taille);
+        long quantiteTotale = (long) quantiteExistante + quantite;
+        if (quantiteTotale > Integer.MAX_VALUE
+                || !stockSuffisant(product, taille, (int) quantiteTotale)) {
             return "redirect:/produits/" + productId + "?erreur=stock";
         }
 
-        Cart cart = getCart(session);
+        Cart cart = cartExistant == null ? getCart(session) : cartExistant;
         cart.addItem(product, quantite, taille);
         session.setAttribute(CART_SESSION_KEY, cart);
         return "redirect:/panier?ajoute";
@@ -91,6 +99,10 @@ public class PanierController {
         Product product = productService.getProductById(productId, locale.getLanguage());
         if (product == null) {
             return "redirect:/panier?erreur=produit";
+        }
+
+        if (!tailleValide(product, taille)) {
+            return "redirect:/panier?erreur=taille";
         }
 
         if (!stockSuffisant(product, taille, quantite)) {
@@ -128,12 +140,26 @@ public class PanierController {
      * decline en tailles, sinon le stock global.
      */
     private boolean stockSuffisant(Product product, String taille, Integer quantite) {
-        if (taille != null && !taille.isBlank()
-                && product.getSizesStock() != null && product.getSizesStock().containsKey(taille)) {
-            Integer stockTaille = product.getSizesStock().get(taille);
+        if (product.getSizesStock() != null && !product.getSizesStock().isEmpty()) {
+            Integer stockTaille = taille == null ? null : product.getSizesStock().get(taille);
             return stockTaille != null && stockTaille >= quantite;
         }
-        return product.getStock() != null && product.getStock() >= quantite;
+        return (taille == null || taille.isBlank())
+                && product.getStock() != null && product.getStock() >= quantite;
+    }
+
+    /**
+     * Un produit avec variantes exige une taille connue. Un produit sans
+     * variantes refuse toute taille injectee manuellement dans la requete.
+     */
+    private boolean tailleValide(Product product, String taille) {
+        boolean produitAvecTailles = product.getSizesStock() != null
+                && !product.getSizesStock().isEmpty();
+        if (produitAvecTailles) {
+            return taille != null && !taille.isBlank()
+                    && product.getSizesStock().containsKey(taille);
+        }
+        return taille == null || taille.isBlank();
     }
 
     /** Recupere le panier de la session ou en cree un nouveau. */

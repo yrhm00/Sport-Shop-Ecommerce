@@ -1,5 +1,7 @@
 package be.henallux.janvier.controller;
 
+import java.util.Objects;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,18 +14,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import be.henallux.janvier.model.InscriptionForm;
-import be.henallux.janvier.model.User;
 import be.henallux.janvier.service.InscriptionService;
+import be.henallux.janvier.service.SanitizationService;
 
 @Controller
 @RequestMapping(value="/inscription")
 public class InscriptionController {
 
     private final InscriptionService inscriptionService;
+    private final SanitizationService sanitizationService;
 
     @Autowired
-    public InscriptionController(InscriptionService inscriptionService) {
+    public InscriptionController(InscriptionService inscriptionService,
+                                 SanitizationService sanitizationService) {
         this.inscriptionService = inscriptionService;
+        this.sanitizationService = sanitizationService;
     }
 
     @GetMapping
@@ -39,6 +44,14 @@ public class InscriptionController {
         
         // Vérification des erreurs de validation
         if (bindingResult.hasErrors()) {
+            return "inscription";
+        }
+
+        // Labo Spring Security 7 : le username est nettoye dans le controleur
+        // et l'inscription est refusee si le sanitizer modifie la saisie.
+        String usernameNettoye = sanitizationService.nettoyer(form.getUsername());
+        if (!Objects.equals(form.getUsername(), usernameNettoye)) {
+            model.addAttribute("errorMessage", "inscription.error.usernameUnsafe");
             return "inscription";
         }
 
@@ -61,10 +74,8 @@ public class InscriptionController {
         }
 
         // Créer l'utilisateur
-        User user = inscriptionService.createUser(form);
+        inscriptionService.createUser(form);
 
-        // Redirection vers la page de connexion avec un message de succès
-        model.addAttribute("successMessage", "Inscription réussie ! Vous pouvez maintenant vous connecter.");
         return "redirect:/connexion?inscriptionSuccess";
     }
 }

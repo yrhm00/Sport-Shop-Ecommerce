@@ -2,7 +2,6 @@ package be.henallux.janvier.dataAccess.entity;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,9 +47,6 @@ public class ProductEntity implements Serializable {
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
     @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "id", insertable = false, updatable = false)
     private CategoryEntity category;
@@ -69,7 +65,6 @@ public class ProductEntity implements Serializable {
         this.description = description;
         this.prix = prix;
         this.stock = stock;
-        this.createdAt = LocalDateTime.now();
     }
 
     // Getters et Setters
@@ -137,14 +132,6 @@ public class ProductEntity implements Serializable {
         this.imageUrl = imageUrl;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public CategoryEntity getCategory() {
         return category;
     }
@@ -161,5 +148,4 @@ public class ProductEntity implements Serializable {
         this.sizes = sizes;
     }
 }
-
 

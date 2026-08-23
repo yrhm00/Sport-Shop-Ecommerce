@@ -20,15 +20,12 @@
                     <h2 class="card-title h3 text-primary"><spring:message code="about.values.title"/></h2>
                     <ul class="list-unstyled">
                         <li class="mb-3">
-                            <i class="bi bi-check-circle-fill text-success me-2"></i>
                             <strong><spring:message code="about.values.quality"/></strong>
                         </li>
                         <li class="mb-3">
-                            <i class="bi bi-check-circle-fill text-success me-2"></i>
                             <strong><spring:message code="about.values.innovation"/></strong>
                         </li>
                         <li class="mb-3">
-                            <i class="bi bi-check-circle-fill text-success me-2"></i>
                             <strong><spring:message code="about.values.service"/></strong>
                         </li>
                     </ul>

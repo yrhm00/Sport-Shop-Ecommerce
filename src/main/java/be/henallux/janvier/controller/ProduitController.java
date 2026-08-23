@@ -70,13 +70,6 @@ public class ProduitController {
         return "produit-detail";
     }
 
-    @GetMapping("/nouveautes")
-    public String showNewArrivals(Model model, Locale locale) {
-        model.addAttribute("titreRubrique", "products.newArrivals");
-        model.addAttribute("products", productService.getNewArrivals(locale.getLanguage()));
-        return "produits-liste";
-    }
-
     @GetMapping("/promotions")
     public String showPromotions(Model model, Locale locale) {
         model.addAttribute("titreRubrique", "products.promotions");

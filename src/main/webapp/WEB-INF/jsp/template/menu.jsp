@@ -2,7 +2,7 @@
 <%@ include file="../include/importTags.jsp" %>
 <nav class="navbar navbar-expand-lg navbar-light bg-light rounded mb-3">
     <div class="container-fluid">
-        <div class="collapse navbar-collapse">
+        <div class="navbar-collapse">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                     <a class="nav-link" href="<spring:url value='/'/>"><spring:message code="menu.home"/></a>

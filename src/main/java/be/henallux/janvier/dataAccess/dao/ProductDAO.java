@@ -33,11 +33,6 @@ public class ProductDAO implements ProductDataAccess {
     }
 
     @Override
-    public List<Product> findAll(String langue) {
-        return convertir(repository.findAllTraduit(langue));
-    }
-
-    @Override
     public Product findById(Integer id, String langue) {
         if (id == null) {
             return null;
@@ -54,19 +49,21 @@ public class ProductDAO implements ProductDataAccess {
     }
 
     @Override
-    public List<Product> findNouveautes(String langue, int limite) {
-        // La requete renvoie les produits du plus recent au plus ancien :
-        // on ne conserve que les premiers.
-        List<Product> produits = convertir(repository.findNouveautesTraduit(langue));
-        if (produits.size() > limite) {
-            return new ArrayList<>(produits.subList(0, limite));
-        }
-        return produits;
-    }
-
-    @Override
     public List<Product> findEnPromotion(String langue, LocalDateTime maintenant) {
         return convertir(repository.findEnPromotionTraduit(langue, maintenant));
+    }
+
+    /**
+     * Verifie le stock global et, lorsque le produit se decline en tailles, le
+     * stock de la variante demandee.
+     */
+    @Override
+    public boolean stockSuffisant(Integer productId, String taille, Integer quantite) {
+        if (productId == null || quantite == null || quantite <= 0) {
+            return false;
+        }
+        ProductEntity produit = repository.findById(productId).orElse(null);
+        return stockSuffisant(produit, taille, quantite);
     }
 
     /**
@@ -81,18 +78,17 @@ public class ProductDAO implements ProductDataAccess {
             return false;
         }
 
-        ProductEntity produit = repository.findById(productId).orElse(null);
-        if (produit == null || produit.getStock() == null || produit.getStock() < quantite) {
+        ProductEntity produit = repository.findByIdForUpdate(productId).orElse(null);
+        if (!stockSuffisant(produit, taille, quantite)) {
             return false;
         }
 
-        // Si le produit se decline en tailles, c'est le stock de la taille qui fait foi.
+        // Si le produit se decline en tailles, une variante existante est
+        // obligatoire. Sinon toute taille recue est une valeur injectee.
         ProductSizeEntity variante = null;
-        if (taille != null && !taille.isBlank()) {
+        boolean produitAvecTailles = produit.getSizes() != null && !produit.getSizes().isEmpty();
+        if (produitAvecTailles) {
             variante = sizeRepository.findByProductIdAndTaille(productId, taille);
-            if (variante != null && variante.getStock() < quantite) {
-                return false;
-            }
         }
 
         if (variante != null) {
@@ -103,6 +99,24 @@ public class ProductDAO implements ProductDataAccess {
         produit.setStock(produit.getStock() - quantite);
         repository.save(produit);
         return true;
+    }
+
+    private boolean stockSuffisant(ProductEntity produit, String taille, Integer quantite) {
+        if (produit == null || quantite == null || quantite <= 0
+                || produit.getStock() == null || produit.getStock() < quantite) {
+            return false;
+        }
+
+        boolean produitAvecTailles = produit.getSizes() != null && !produit.getSizes().isEmpty();
+        if (!produitAvecTailles) {
+            return taille == null || taille.isBlank();
+        }
+        if (taille == null || taille.isBlank()) {
+            return false;
+        }
+
+        ProductSizeEntity variante = sizeRepository.findByProductIdAndTaille(produit.getId(), taille);
+        return variante != null && variante.getStock() != null && variante.getStock() >= quantite;
     }
 
     private List<Product> convertir(List<TranslatedProduct> translatedProducts) {

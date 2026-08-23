@@ -16,6 +16,9 @@
     <c:if test="${param.erreur == 'quantite'}">
         <div class="alert alert-danger"><spring:message code="error.cart.quantity"/></div>
     </c:if>
+    <c:if test="${param.erreur == 'taille'}">
+        <div class="alert alert-danger"><spring:message code="error.cart.size"/></div>
+    </c:if>
     <c:if test="${param.erreur == 'produit'}">
         <div class="alert alert-danger"><spring:message code="error.product.notFound"/></div>
     </c:if>
@@ -23,14 +26,9 @@
     <div class="row">
         <div class="col-md-6">
             <div class="card border-0 shadow-sm position-relative">
-                <c:if test="${product.newArrival}">
-                    <div class="position-absolute top-0 start-0 m-3">
-                        <span class="badge bg-success fs-5"><spring:message code="product.badge.new"/></span>
-                    </div>
-                </c:if>
                 <c:if test="${product.enPromotion}">
                     <div class="position-absolute top-0 end-0 m-3">
-                        <span class="badge bg-danger fs-5"><c:out value="${product.promotionLibelle}"/></span>
+                        <span class="badge bg-danger fs-5"><spring:message code="product.badge.promotion"/></span>
                     </div>
                 </c:if>
                 <div class="card-body text-center p-5">

@@ -1,8 +1,14 @@
 package be.henallux.janvier.dataAccess.repository;
 
 import java.util.List;
+import java.util.Optional;
+
+import javax.persistence.LockModeType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import be.henallux.janvier.dataAccess.entity.OrderEntity;
@@ -12,7 +18,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Integer> {
 
     List<OrderEntity> findByUserIdOrderByDateCommandeDesc(Integer userId);
 
-    List<OrderEntity> findByUserIdAndStatutOrderByDateCommandeDesc(Integer userId, String statut);
-
-    List<OrderEntity> findByPaye(Boolean paye);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from OrderEntity o where o.id = :id")
+    Optional<OrderEntity> findByIdForUpdate(@Param("id") Integer id);
 }

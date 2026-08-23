@@ -26,7 +26,4 @@ public class CategoryService {
         return categoryDAO.findById(id, langue);
     }
 
-    public Category getCategoryByCode(String code, String langue) {
-        return categoryDAO.findByCode(code, langue);
-    }
 }

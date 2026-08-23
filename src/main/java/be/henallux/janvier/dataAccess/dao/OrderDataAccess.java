@@ -12,10 +12,16 @@ public interface OrderDataAccess {
 
     Order findById(Integer orderId);
 
+    /** Charge et verrouille la commande pendant une transition de statut. */
+    Order findByIdForUpdate(Integer orderId);
+
     List<OrderLine> findLignes(Integer orderId);
 
     List<Order> findByUserId(Integer userId);
 
     /** Met a jour le statut (et le drapeau paye) d'une commande existante. */
     void updateStatut(Integer orderId, String statut, boolean paye);
+
+    /** Associe la tentative PayPal courante a la commande locale. */
+    void updatePaypalOrderId(Integer orderId, String paypalOrderId);
 }

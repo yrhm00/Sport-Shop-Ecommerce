@@ -21,12 +21,12 @@ public class SecurityConfiguration {
 
     /** Pages accessibles a tout visiteur, authentifie ou non. */
     private static final String[] ACCESSIBLE_A_TOUS = new String[] {
-        "/", "/accueil", "/a-propos", "/produits/**", "/connexion/**", "/inscription/**", "/panier/**"
+        "/", "/a-propos", "/produits/**", "/connexion/**", "/inscription/**", "/panier/**"
     };
 
     /** Ressources statiques. */
     private static final String[] RESSOURCES_STATIQUES = new String[] {
-        "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
+        "/css/**", "/js/**", "/images/**"
     };
 
     @Autowired

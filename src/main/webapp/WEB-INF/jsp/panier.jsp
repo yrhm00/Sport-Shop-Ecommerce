@@ -9,6 +9,9 @@
     <c:if test="${param.erreur == 'quantite'}">
         <div class="alert alert-danger"><spring:message code="error.cart.quantity"/></div>
     </c:if>
+    <c:if test="${param.erreur == 'taille'}">
+        <div class="alert alert-danger"><spring:message code="error.cart.size"/></div>
+    </c:if>
     <c:if test="${param.erreur == 'produit'}">
         <div class="alert alert-danger"><spring:message code="error.product.notFound"/></div>
     </c:if>
@@ -44,11 +47,13 @@
                                     <form method="post" action="<spring:url value='/panier/modifier'/>" class="d-inline">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                         <input type="hidden" name="productId" value="${item.product.id}" />
+                                        <c:set var="stockMaximum" value="${item.product.stock}"/>
                                         <c:if test="${not empty item.taille}">
                                             <input type="hidden" name="taille" value="<c:out value='${item.taille}'/>" />
+                                            <c:set var="stockMaximum" value="${item.product.sizesStock[item.taille]}"/>
                                         </c:if>
                                         <input type="number" name="quantite" value="${item.quantite}" min="1"
-                                               max="${item.product.stock}" class="form-control form-control-sm joggin-champ-quantite" />
+                                               max="${stockMaximum}" class="form-control form-control-sm joggin-champ-quantite" />
                                         <button type="submit" class="btn btn-sm btn-outline-primary"><spring:message code="cart.btn.modify"/></button>
                                     </form>
                                 </td>

@@ -3,6 +3,7 @@ package be.henallux.janvier.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -71,6 +72,7 @@ class OrderServiceTest {
     @Test
     void laCommandeEstEnregistreeEnAttenteAvantLePaiement() {
         when(userDAO.findByUsername("user1")).thenReturn(utilisateur());
+        when(productDAO.stockSuffisant(1, "42", 2)).thenReturn(true);
         when(orderDAO.create(any(Order.class), any())).thenAnswer(invocation -> {
             Order order = invocation.getArgument(0);
             order.setId(42);
@@ -92,6 +94,7 @@ class OrderServiceTest {
     @Test
     void laTailleCommandeeEstConserveeDansLaLigne() {
         when(userDAO.findByUsername("user1")).thenReturn(utilisateur());
+        when(productDAO.stockSuffisant(1, "42", 2)).thenReturn(true);
         when(orderDAO.create(any(Order.class), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         orderService.createOrder(panierAvecUnProduit(), "user1");
@@ -122,9 +125,10 @@ class OrderServiceTest {
         order.setId(42);
         order.setStatut(Order.STATUT_EN_ATTENTE);
         order.setLignes(List.of(new OrderLine(1, "42", 2, new BigDecimal("100.00"))));
-        when(orderDAO.findById(42)).thenReturn(order);
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(order);
+        when(productDAO.decrementerStock(1, "42", 2)).thenReturn(true);
 
-        orderService.marquerPayee(42);
+        assertTrue(orderService.marquerPayee(42));
 
         verify(orderDAO).updateStatut(42, Order.STATUT_PAYEE, true);
         verify(productDAO).decrementerStock(1, "42", 2);
@@ -136,9 +140,9 @@ class OrderServiceTest {
         order.setId(42);
         order.setStatut(Order.STATUT_PAYEE);
         order.setLignes(List.of(new OrderLine(1, "42", 2, new BigDecimal("100.00"))));
-        when(orderDAO.findById(42)).thenReturn(order);
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(order);
 
-        orderService.marquerPayee(42);
+        assertFalse(orderService.marquerPayee(42));
 
         verify(orderDAO, never()).updateStatut(anyInt(), anyString(), eq(true));
         verify(productDAO, never()).decrementerStock(anyInt(), anyString(), anyInt());
@@ -149,7 +153,7 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(42);
         order.setStatut(Order.STATUT_EN_ATTENTE);
-        when(orderDAO.findById(42)).thenReturn(order);
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(order);
 
         orderService.annuler(42);
 
@@ -162,7 +166,7 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(42);
         order.setStatut(Order.STATUT_PAYEE);
-        when(orderDAO.findById(42)).thenReturn(order);
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(order);
 
         orderService.annuler(42);
 
@@ -179,5 +183,46 @@ class OrderServiceTest {
         assertTrue(orderService.appartientA(order, "user1"));
         assertFalse(orderService.appartientA(order, "pirate"));
         assertFalse(orderService.appartientA(null, "user1"));
+    }
+
+    @Test
+    void uneCommandeAnnuleeNePeutJamaisEtreMarqueePayee() {
+        Order order = new Order();
+        order.setId(42);
+        order.setStatut(Order.STATUT_ANNULEE);
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(order);
+
+        assertFalse(orderService.marquerPayee(42));
+
+        verify(orderDAO, never()).updateStatut(anyInt(), anyString(), eq(true));
+        verify(productDAO, never()).decrementerStock(anyInt(), any(), anyInt());
+    }
+
+    @Test
+    void unEchecDeStockEmpecheDeMarquerLaCommandePayee() {
+        Order order = new Order();
+        order.setId(42);
+        order.setStatut(Order.STATUT_EN_ATTENTE);
+        order.setLignes(List.of(new OrderLine(1, "42", 2, new BigDecimal("100.00"))));
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(order);
+        when(productDAO.decrementerStock(1, "42", 2)).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> orderService.marquerPayee(42));
+
+        verify(orderDAO, never()).updateStatut(anyInt(), anyString(), eq(true));
+    }
+
+    @Test
+    void identifiantPaypalAssocieUniquementAUneCommandeEnAttente() {
+        Order pending = new Order();
+        pending.setId(42);
+        pending.setStatut(Order.STATUT_EN_ATTENTE);
+        when(orderDAO.findByIdForUpdate(42)).thenReturn(pending);
+
+        assertTrue(orderService.associerPaiement(42, "PAYPAL-42"));
+        verify(orderDAO).updatePaypalOrderId(42, "PAYPAL-42");
+
+        pending.setStatut(Order.STATUT_ANNULEE);
+        assertFalse(orderService.associerPaiement(42, "PAYPAL-NEW"));
     }
 }

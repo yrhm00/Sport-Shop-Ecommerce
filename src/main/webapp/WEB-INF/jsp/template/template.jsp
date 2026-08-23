@@ -3,9 +3,10 @@
 <!DOCTYPE html>
 <html lang="${pageContext.response.locale.language}">
 <head>
+    <tiles:importAttribute name="titre" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><tiles:insertAttribute name="titre" /></title>
+    <title><spring:message code="${titre}" /></title>
     <%-- Bootstrap et la feuille de style du site sont servis par l'application
          elle-meme : la CSP (style-src 'self') interdit les CDN et les styles inline. --%>
     <link href="<spring:url value='/css/bootstrap.min.css'/>" rel="stylesheet">
@@ -28,7 +29,6 @@
         </footer>
     </div>
 
-    <script src="<spring:url value='/js/bootstrap.bundle.min.js'/>"></script>
     <script src="<spring:url value='/js/app.js'/>"></script>
 </body>
 </html>

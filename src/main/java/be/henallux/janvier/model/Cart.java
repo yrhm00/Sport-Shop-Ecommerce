@@ -18,9 +18,6 @@ public class Cart {
     /**
      * Ajoute un produit au panier ou augmente sa quantité s'il existe déjà
      */
-    /**
-     * Ajoute un produit au panier ou augmente sa quantité s'il existe déjà
-     */
     public void addItem(Product product, Integer quantite, String taille) {
         if (product == null || quantite == null || quantite <= 0) {
             return;
@@ -40,6 +37,12 @@ public class Cart {
 
     public void addItem(Product product, Integer quantite) {
         addItem(product, quantite, null);
+    }
+
+    /** Quantite deja presente pour un produit et une taille donnes. */
+    public int getQuantity(Integer productId, String taille) {
+        CartItem item = findItemByProductAndSize(productId, taille);
+        return item == null || item.getQuantite() == null ? 0 : item.getQuantite();
     }
 
     /**
@@ -129,5 +132,4 @@ public class Cart {
         this.items = items;
     }
 }
-
 

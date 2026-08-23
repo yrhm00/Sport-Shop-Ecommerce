@@ -109,10 +109,14 @@ public class CommandeController {
 
     /** Annulation explicite par le client : la commande reste en base, statut ANNULEE. */
     @PostMapping("/{orderId}/annuler")
-    public String annulerCommande(@PathVariable Integer orderId, Principal principal) {
+    public String annulerCommande(@PathVariable Integer orderId, Principal principal,
+                                  HttpSession session) {
         Order order = orderService.getOrder(orderId);
-        if (orderService.appartientA(order, principal.getName())) {
+        if (orderService.appartientA(order, principal.getName()) && order.isEnAttente()) {
             orderService.annuler(orderId);
+            if (orderId.equals(session.getAttribute(PENDING_ORDER_KEY))) {
+                session.removeAttribute(PENDING_ORDER_KEY);
+            }
             return "redirect:/commandes/mes-commandes?annulee";
         }
         return "redirect:/commandes/mes-commandes";
@@ -125,16 +129,33 @@ public class CommandeController {
         Integer orderId = (Integer) session.getAttribute(PENDING_ORDER_KEY);
         Order order = orderService.getOrder(orderId);
 
-        if (order == null || !orderService.appartientA(order, principal.getName())) {
+        if (order == null || !orderService.appartientA(order, principal.getName())
+                || !order.isEnAttente()
+                || order.getPaypalOrderId() == null
+                || !order.getPaypalOrderId().equals(token)) {
+            LOGGER.warn("Retour PayPal sans correspondance pour la commande {}", orderId);
             return "redirect:/commandes/mes-commandes";
         }
 
-        if (!paymentService.captureOrder(token)) {
+        // Controle immediat avant la capture pour eviter d'encaisser une commande
+        // dont le stock n'est deja plus disponible.
+        if (!orderService.stockDisponible(orderId)) {
+            return "redirect:/commandes/" + orderId + "/attente?error=stock_unavailable";
+        }
+
+        if (!paymentService.captureOrder(token, orderId, order.getMontantTotal())) {
             LOGGER.warn("Capture PayPal refusee pour la commande {}", orderId);
             return "redirect:/commandes/" + orderId + "/attente?error=payment_failed";
         }
 
-        orderService.marquerPayee(orderId);
+        try {
+            if (!orderService.marquerPayee(orderId)) {
+                return "redirect:/commandes/mes-commandes";
+            }
+        } catch (IllegalStateException e) {
+            LOGGER.error("Stock impossible a mettre a jour pour la commande deja capturee {}", orderId, e);
+            return "redirect:/commandes/" + orderId + "/attente?error=stock_unavailable";
+        }
         session.removeAttribute(PENDING_ORDER_KEY);
 
         // Le panier n'est vide qu'une fois le paiement reellement encaisse.
@@ -165,7 +186,7 @@ public class CommandeController {
     public String commandeEnAttente(@PathVariable Integer orderId, Principal principal, Model model,
                                     @RequestParam(required = false) String error) {
         Order order = orderService.getOrder(orderId);
-        if (!orderService.appartientA(order, principal.getName())) {
+        if (!orderService.appartientA(order, principal.getName()) || !order.isEnAttente()) {
             return "redirect:/commandes/mes-commandes";
         }
 
@@ -190,8 +211,14 @@ public class CommandeController {
     private String demanderPaiement(Order order, HttpServletRequest request) {
         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":"
                 + request.getServerPort() + request.getContextPath();
-        return paymentService.createOrder(order.getMontantTotal(),
+        PaymentService.CreatedPayment createdPayment = paymentService.createOrder(
+                order.getMontantTotal(), order.getId(),
                 baseUrl + "/commandes/pay/success",
                 baseUrl + "/commandes/pay/cancel");
+        if (createdPayment == null
+                || !orderService.associerPaiement(order.getId(), createdPayment.getPaypalOrderId())) {
+            return null;
+        }
+        return createdPayment.getApprovalUrl();
     }
 }

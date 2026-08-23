@@ -1,7 +1,6 @@
 package be.henallux.janvier.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -10,9 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ConnexionController {
 
     @GetMapping
-    public String showConnexion(Model model) {
+    public String showConnexion() {
         return "connexion";
     }
 }
-
 

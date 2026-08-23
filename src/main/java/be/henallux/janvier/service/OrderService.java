@@ -58,8 +58,10 @@ public class OrderService {
         List<OrderLine> lignes = new ArrayList<>();
         for (CartItem item : cart.getItems()) {
             Product product = item.getProduct();
-            if (product == null || product.getId() == null) {
-                continue;
+            if (product == null || product.getId() == null || product.getPrix() == null
+                    || item.getQuantite() == null || item.getQuantite() <= 0
+                    || !productDAO.stockSuffisant(product.getId(), item.getTaille(), item.getQuantite())) {
+                return null;
             }
             lignes.add(new OrderLine(product.getId(), item.getTaille(), item.getQuantite(), product.getPrix()));
         }
@@ -93,20 +95,60 @@ public class OrderService {
     }
 
     /**
+     * Enregistre l'identifiant PayPal de la tentative courante. Une ancienne URL
+     * PayPal ne pourra ainsi jamais valider une tentative plus recente.
+     */
+    @Transactional
+    public boolean associerPaiement(Integer orderId, String paypalOrderId) {
+        if (orderId == null || paypalOrderId == null || paypalOrderId.isBlank()) {
+            return false;
+        }
+        Order order = orderDAO.findByIdForUpdate(orderId);
+        if (order == null || !order.isEnAttente()) {
+            return false;
+        }
+        orderDAO.updatePaypalOrderId(orderId, paypalOrderId);
+        return true;
+    }
+
+    /** Verifie de nouveau toutes les lignes juste avant l'appel de capture PayPal. */
+    public boolean stockDisponible(Integer orderId) {
+        Order order = orderDAO.findById(orderId);
+        if (order == null || !order.isEnAttente() || order.getLignes() == null
+                || order.getLignes().isEmpty()) {
+            return false;
+        }
+        for (OrderLine ligne : order.getLignes()) {
+            if (!productDAO.stockSuffisant(
+                    ligne.getProductId(), ligne.getTaille(), ligne.getQuantite())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Marque la commande comme payee et retire les quantites commandees du stock.
      */
     @Transactional
-    public void marquerPayee(Integer orderId) {
-        Order order = orderDAO.findById(orderId);
-        if (order == null || Order.STATUT_PAYEE.equals(order.getStatut())) {
-            return;
+    public boolean marquerPayee(Integer orderId) {
+        Order order = orderDAO.findByIdForUpdate(orderId);
+        if (order == null || !order.isEnAttente()) {
+            return false;
         }
-
-        orderDAO.updateStatut(orderId, Order.STATUT_PAYEE, true);
 
         for (OrderLine ligne : order.getLignes()) {
-            productDAO.decrementerStock(ligne.getProductId(), ligne.getTaille(), ligne.getQuantite());
+            if (!productDAO.decrementerStock(
+                    ligne.getProductId(), ligne.getTaille(), ligne.getQuantite())) {
+                // Exception volontaire : @Transactional annule les retraits deja
+                // effectues sur les lignes precedentes.
+                throw new IllegalStateException("Stock insuffisant pour finaliser la commande " + orderId);
+            }
         }
+
+        // Le statut n'est modifie qu'apres le succes de tous les retraits de stock.
+        orderDAO.updateStatut(orderId, Order.STATUT_PAYEE, true);
+        return true;
     }
 
     /**
@@ -115,7 +157,7 @@ public class OrderService {
      */
     @Transactional
     public void annuler(Integer orderId) {
-        Order order = orderDAO.findById(orderId);
+        Order order = orderDAO.findByIdForUpdate(orderId);
         if (order == null || !order.isEnAttente()) {
             return;
         }

@@ -37,7 +37,6 @@ public class WebConfiguration implements WebMvcConfigurer {
         resolver.setDefaultLocale(Locale.FRENCH);
         resolver.setCookieName("jogginAppLocale_v2");
         resolver.setCookiePath("/"); // Important : cookie valable pour tout le site
-        resolver.setCookieMaxAge(3600 * 24 * 30); // 30 jours
         return resolver;
     }
 
