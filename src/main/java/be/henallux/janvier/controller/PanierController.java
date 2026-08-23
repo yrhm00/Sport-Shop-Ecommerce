@@ -52,7 +52,7 @@ public class PanierController {
     /** Ajoute un produit au panier (accessible aussi aux visiteurs non connectes). */
     @PostMapping("/ajouter/{productId}")
     public String addToCart(@PathVariable Integer productId,
-                            @RequestParam(defaultValue = "1") Integer quantite,
+                            @RequestParam(value = "quantite", required = false) String quantiteSaisie,
                             @RequestParam(required = false) String taille,
                             HttpSession session,
                             Locale locale) {
@@ -62,6 +62,7 @@ public class PanierController {
             return "redirect:/produits?erreur=produit";
         }
 
+        Integer quantite = convertirQuantite(quantiteSaisie);
         if (quantite == null || quantite <= 0) {
             return "redirect:/produits/" + productId + "?erreur=quantite";
         }
@@ -87,11 +88,12 @@ public class PanierController {
     /** Modifie la quantite d'un article du panier. */
     @PostMapping("/modifier")
     public String updateQuantity(@RequestParam Integer productId,
-                                 @RequestParam Integer quantite,
+                                 @RequestParam(value = "quantite", required = false) String quantiteSaisie,
                                  @RequestParam(required = false) String taille,
                                  HttpSession session,
                                  Locale locale) {
 
+        Integer quantite = convertirQuantite(quantiteSaisie);
         if (quantite == null || quantite <= 0) {
             return "redirect:/panier?erreur=quantite";
         }
@@ -113,6 +115,21 @@ public class PanierController {
         cart.updateQuantity(productId, quantite, taille);
         session.setAttribute(CART_SESSION_KEY, cart);
         return "redirect:/panier";
+    }
+
+    /**
+     * Convertit la saisie de quantite sans laisser Spring produire une page
+     * d'erreur 400 lorsque le champ est vide, non numerique ou trop grand.
+     */
+    private Integer convertirQuantite(String quantiteSaisie) {
+        if (quantiteSaisie == null || quantiteSaisie.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(quantiteSaisie);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /** Supprime un article du panier. */
