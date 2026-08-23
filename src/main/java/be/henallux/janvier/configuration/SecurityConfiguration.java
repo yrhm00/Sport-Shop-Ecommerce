@@ -86,7 +86,10 @@ public class SecurityConfiguration {
                                         + "script-src 'self'; "
                                         + "style-src 'self'; "
                                         + "img-src 'self' data:; "
-                                        + "form-action 'self'; "
+                                        // Le formulaire de confirmation est d'abord traite localement,
+                                        // puis redirige vers la page d'approbation PayPal.
+                                        + "form-action 'self' https://www.sandbox.paypal.com "
+                                        + "https://www.paypal.com; "
                                         + "base-uri 'self'; "
                                         + "frame-ancestors 'none'"));
 
