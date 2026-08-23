@@ -73,6 +73,16 @@ class ValidationMessagesTest {
     }
 
     @Test
+    void afficheLesBornesDuCodePostalEnAnglais() {
+        InscriptionForm form = new InscriptionForm();
+        form.setCodePostal("1");
+        String message = messageDeValidation(form, "inscriptionForm",
+                "codePostal", "Size", Locale.ENGLISH);
+
+        assertEquals("Zip code must be between 4 and 10 characters.", message);
+    }
+
+    @Test
     void afficheLesBornesDeLadresseDuProfilEnAnglais() {
         ProfileForm form = new ProfileForm();
         form.setAdresse("x");
